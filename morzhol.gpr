@@ -24,7 +24,7 @@ project Morzhol is
    type OS_Type is ("UNIX", "Windows_NT");
    OS : OS_Type := external ("OS", "UNIX");
 
-   type Build_Type is ("Debug", "Release");
+   type Build_Type is ("Debug", "Release", "Profile");
    Build : Build_Type := external ("PRJ_BUILD", "Debug");
 
    for Source_Dirs use ("src");
@@ -33,6 +33,13 @@ project Morzhol is
    for Library_Dir use "lib";
    for Library_Name use "morzhol";
    for Library_Kind use "dynamic";
+
+   case Build is
+      when "Profile" =>
+         for Library_Options use Project'Library_Options & ("-fprofile-arcs");
+      when "Debug" | "Release" =>
+         null;
+   end case;
 
    -------------
    -- Builder --
@@ -58,7 +65,7 @@ project Morzhol is
 
    package Compiler is
       case Build is
-         when "Debug" =>
+         when "Debug" | "Profile" =>
             for Default_Switches ("Ada") use Common_Options & Debug_Options;
 
          when "Release" =>
@@ -81,7 +88,7 @@ project Morzhol is
 
    package Binder is
       case Build is
-         when "Debug" =>
+         when "Debug" | "Profile" =>
             for Default_Switches ("Ada") use ("-E", "-g");
 
          when "Release" =>
@@ -95,7 +102,7 @@ project Morzhol is
 
    package Linker is
       case Build is
-         when "Debug" =>
+         when "Debug" | "Profile" =>
             for Default_Switches ("Ada") use ("-g");
 
          when "Release" =>
