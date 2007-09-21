@@ -19,19 +19,37 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-with Ada.Strings.Unbounded;
+package body Morzhol.Strings is
 
-package Morzhol.Strings is
+   ------------------
+   -- HTML_To_Text --
+   ------------------
 
-   use Ada.Strings.Unbounded;
+   function HTML_To_Text (HTML_Source : in String) return String is
 
-   function "+" (Source : in String) return Unbounded_String
-                 renames To_Unbounded_String;
+      Result  : Unbounded_String;
+      Last    : Integer := HTML_Source'First;
+      To_Skip : Natural := 0;
 
-   function "-" (Source : in Unbounded_String) return String
-                 renames To_String;
-
-   function HTML_To_Text (HTML_Source : in String) return String;
-   --  Returns a text only version
+   begin
+      for K in HTML_Source'Range loop
+         if To_Skip /= 0 then
+            To_Skip := To_Skip - 1;
+         else
+            if HTML_Source (K) = '<' then
+               Append (Result, HTML_Source (Last .. K - 1));
+               Search_End_Tag :
+               for L in K + 1 .. HTML_Source'Last loop
+                  if HTML_Source (L) = '>' then
+                     To_Skip := L - K;
+                     Last    := L + 1;
+                     exit Search_End_Tag;
+                  end if;
+               end loop Search_End_Tag;
+            end if;
+         end if;
+      end loop;
+      return -Result;
+   end HTML_To_Text;
 
 end Morzhol.Strings;
