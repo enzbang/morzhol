@@ -19,47 +19,13 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-package body Morzhol.Strings is
+with "../morzhol";
 
-   ------------------
-   -- HTML_To_Text --
-   ------------------
+project Test is
 
-   function HTML_To_Text (HTML_Source : in String) return String is
+   for Source_Dirs use (".");
+   for Object_Dir use ".";
+   for Exec_Dir use ".";
+   for Main use ("test");
 
-      Result  : Unbounded_String;
-      Last    : Integer := HTML_Source'First;
-      To_Skip : Natural := 0;
-
-   begin
-      for K in HTML_Source'Range loop
-         if To_Skip /= 0 then
-            To_Skip := To_Skip - 1;
-         else
-            if HTML_Source (K) = '<' then
-               Append (Result, HTML_Source (Last .. K - 1));
-               Search_End_Tag :
-               for L in K + 1 .. HTML_Source'Last loop
-                  if HTML_Source (L) = '>' then
-                     To_Skip := L - K;
-                     Last    := L + 1;
-                     exit Search_End_Tag;
-                  end if;
-               end loop Search_End_Tag;
-
-               if To_Skip = 0 then
-                  --  No last end tag
-                  Last := HTML_Source'Last;
-               end if;
-            end if;
-         end if;
-      end loop;
-
-      if Last < HTML_Source'Last then
-         Append (Result, HTML_Source (Last .. HTML_Source'Last));
-      end if;
-
-      return -Result;
-   end HTML_To_Text;
-
-end Morzhol.Strings;
+end Test;

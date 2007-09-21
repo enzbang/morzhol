@@ -19,47 +19,26 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-package body Morzhol.Strings is
+with Morzhol.Strings;
+with Ada.Text_IO;
+with Ada.Command_Line;
 
-   ------------------
-   -- HTML_To_Text --
-   ------------------
+procedure Test is
 
-   function HTML_To_Text (HTML_Source : in String) return String is
+   use Morzhol.Strings;
+   use Ada.Command_Line;
+begin
 
-      Result  : Unbounded_String;
-      Last    : Integer := HTML_Source'First;
-      To_Skip : Natural := 0;
-
-   begin
-      for K in HTML_Source'Range loop
-         if To_Skip /= 0 then
-            To_Skip := To_Skip - 1;
-         else
-            if HTML_Source (K) = '<' then
-               Append (Result, HTML_Source (Last .. K - 1));
-               Search_End_Tag :
-               for L in K + 1 .. HTML_Source'Last loop
-                  if HTML_Source (L) = '>' then
-                     To_Skip := L - K;
-                     Last    := L + 1;
-                     exit Search_End_Tag;
-                  end if;
-               end loop Search_End_Tag;
-
-               if To_Skip = 0 then
-                  --  No last end tag
-                  Last := HTML_Source'Last;
-               end if;
-            end if;
-         end if;
-      end loop;
-
-      if Last < HTML_Source'Last then
-         Append (Result, HTML_Source (Last .. HTML_Source'Last));
-      end if;
-
-      return -Result;
-   end HTML_To_Text;
-
-end Morzhol.Strings;
+   if HTML_To_Text ("<a href='http://morzhol.google.code.com'>Morzhol</a>")
+     = "Morzhol"
+     and then HTML_To_Text ("A <em>small</em> test") = "A small test"
+     and then HTML_To_Text ("for <br /><hr /><br /> html_to_text")
+     = "for  html_to_text"
+   then
+      Ada.Text_IO.Put_Line ("Ok");
+      Set_Exit_Status (Success);
+   else
+      Ada.Text_IO.Put_Line ("Error");
+      Set_Exit_Status (Failure);
+   end if;
+end Test;
