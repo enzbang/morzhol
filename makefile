@@ -19,15 +19,17 @@
 ##  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       ##
 ##############################################################################
 
-GNATMAKE=gnatmake
-GNATCLEAN=gnatclean
+GNAT=gnat
 
 all:
 
+setup: 
+	-mkdir obj lib
+
 check:
-	$(GNATMAKE) -Ptest/test
+	$(GNAT) make -Ptest/test
 	./test/test
 
 clean:
-	-$(GNATCLEAN) -q -Pmorzhol
-	-$(GNATCLEAN) -q -Ptest/test
+	-$(GNAT) clean -q -Pmorzhol
+	-$(GNAT) clean -q -Ptest/test
