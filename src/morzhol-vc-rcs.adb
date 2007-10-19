@@ -36,8 +36,9 @@ package body Morzhol.VC.RCS is
    use Morzhol.OS;
    use Morzhol.Strings;
 
-   Cmd          : constant String := "cmd.exe";
-   Diff_Rev_Opt : constant String := "-r";
+   Cmd           : constant String := "cmd.exe";
+   Diff_Rev_Opt  : constant String := "-r";
+   Ci_Author_Opt : constant String := "-w";
 
    Cmd_Option : aliased String := "/c";
    Sh_Option  : aliased String := "sh";
@@ -57,10 +58,14 @@ package body Morzhol.VC.RCS is
    --  Add  --
    -----------
 
-   function Add (Engine : in RCS; Filename : in String) return Boolean
+   function Add
+     (Engine   : in RCS;
+      Filename : in String;
+      Author   : in String := "")
+      return Boolean
    is
    begin
-      return Commit (Engine, Filename, "File : " & Filename);
+      return Commit (Engine, Filename, "File : " & Filename, Author);
    end Add;
 
    --------------
@@ -70,7 +75,8 @@ package body Morzhol.VC.RCS is
    function Commit
      (Engine   : in RCS;
       Filename : in String;
-      Message  : in String)
+      Message  : in String;
+      Author   : in String := "")
      return Boolean
    is
       pragma Unreferenced (Engine);
@@ -80,9 +86,15 @@ package body Morzhol.VC.RCS is
       Pd      : Expect.Process_Descriptor;
       Result  : Expect.Expect_Match;
 
-      RCS_File : OS_Lib.String_Access := new String'(Filename);
+      RCS_File   : OS_Lib.String_Access := new String'(Filename);
+      RCS_Author : OS_Lib.String_Access;
 
    begin
+
+      if Author /= "" then
+         RCS_Author := new String'(Ci_Author_Opt & Author);
+      end if;
+
       if Is_Windows then
          Expect.Non_Blocking_Spawn
            (Descriptor => Pd,
@@ -91,14 +103,16 @@ package body Morzhol.VC.RCS is
                                                 2 => Sh_Option'Access,
                                                 3 => Ci_Command'Access,
                                                 4 => Ci_Opt'Access,
-                                                5 => RCS_File),
+                                                5 => RCS_Author,
+                                                6 => RCS_File),
             Err_To_Out => True);
       else
          Expect.Non_Blocking_Spawn
            (Descriptor => Pd,
             Command    => Ci_Command,
             Args       => OS_Lib.Argument_List'(1 => Ci_Opt'Access,
-                                                2 => RCS_File),
+                                                2 => RCS_Author,
+                                                3 => RCS_File),
             Err_To_Out => True);
 
       end if;
@@ -107,6 +121,7 @@ package body Morzhol.VC.RCS is
       Expect.Send (Pd, ".");
 
       OS_Lib.Free (RCS_File);
+      OS_Lib.Free (RCS_Author);
 
       Expect.Expect (Pd, Result, "done");
       Expect.Close (Pd);
@@ -116,6 +131,7 @@ package body Morzhol.VC.RCS is
    exception
       when Expect.Invalid_Process | Expect.Process_Died =>
          OS_Lib.Free (RCS_File);
+         OS_Lib.Free (RCS_Author);
          return False;
    end Commit;
 
@@ -280,7 +296,7 @@ package body Morzhol.VC.RCS is
               (Descriptor => Pd,
                Result     => Result,
                Regexp     => "\nrevision ([1-9\.]+)\ndate: (.*?);"
-               & ".*author: ([a-zA-Z]+);.*\n(.*)",
+               & ".*author: (.*?);.*\n(.*)",
                Matched    => Matched);
 
             CL.Revision :=

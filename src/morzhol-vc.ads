@@ -39,17 +39,23 @@ package Morzhol.VC is
    function Commit
      (Engine   : in VCS;
       Filename : in String;
-      Message  : in String)
+      Message  : in String;
+      Author   : in String := "")
      return Boolean is abstract;
    --  Checking in the changes. Message is the commit log message
+   --  If no author is given use the default one a the system
 
    function Lock
      (Engine : in VCS; Filename : in String) return Boolean is abstract;
    --  Lock file
 
    function Add
-     (Engine : in VCS; Filename : in String) return Boolean is abstract;
+     (Engine   : in VCS;
+      Filename : in String;
+      Author   : in String := "")
+      return Boolean is abstract;
    --  Add a new file or do the Initial check-in
+   --  If no author is given use the default one a the system
 
    function Remove
      (Engine : in VCS; Filename : in String) return Boolean is abstract;

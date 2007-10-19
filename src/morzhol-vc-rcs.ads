@@ -30,11 +30,16 @@ package Morzhol.VC.RCS is
    function Commit
      (Engine   : in RCS;
       Filename : in String;
-      Message  : in String)
+      Message  : in String;
+      Author   : in String := "")
      return Boolean;
    --  Checking in the changes
 
-   function Add (Engine : in RCS; Filename : in String) return Boolean;
+   function Add
+     (Engine   : in RCS;
+      Filename : in String;
+      Author   : in String := "")
+      return Boolean;
    --  Do the initial check-in
 
    function Remove (Engine : in RCS; Filename : in String) return Boolean;
