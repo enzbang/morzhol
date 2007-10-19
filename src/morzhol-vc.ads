@@ -62,4 +62,12 @@ package Morzhol.VC is
      return Log is abstract;
    --  Returns the log of the given file. Limit = 0 means no limit.
 
+   function Diff
+     (Engine       : in VCS;
+      Filename     : in String;
+      From_Version : in String;
+      To_Version   : in String)
+     return String is abstract;
+   --  Returns the diff
+
 end Morzhol.VC;

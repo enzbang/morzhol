@@ -46,4 +46,13 @@ package Morzhol.VC.RCS is
       Limit    : in Natural := 0)
      return Log;
 
+   function Diff
+     (Engine       : in RCS;
+      Filename     : in String;
+      From_Version : in String;
+      To_Version   : in String)
+     return String;
+   --  Returns the diff
+
+
 end Morzhol.VC.RCS;

@@ -90,10 +90,10 @@ begin
       end if;
    end if;
 
-   Ada.Text_IO.Put_Line ("Ok ??");
    Change_Test_File : declare
      File_To_Change : File_Type;
    begin
+
       Open (File => File_To_Change,
             Mode => Out_File,
             Name => "test/RCS_Test");
@@ -103,7 +103,6 @@ begin
 
    end Change_Test_File;
 
-   Ada.Text_IO.Put_Line ("Ok ??");
 
    if Commit (VCS_Engine, "test/RCS_Test", "first commit by test.adb") then
       Ada.Text_IO.Put_Line ("Ok - 4");
@@ -115,12 +114,32 @@ begin
    end if;
 
    declare
-      File_Log : constant Morzhol.VC.Log := Get_Log (VCS_Engine, "test/RCS_Test");
+      File_Log : constant Morzhol.VC.Log :=
+                   Get_Log (VCS_Engine, "test/RCS_Test");
    begin
       for K in File_Log'range loop
          Ada.Text_IO.Put_Line (-File_Log (K).Message);
+         Ada.Text_IO.Put_Line (-File_Log (K).Revision);
       end loop;
+
+      if Diff (VCS_Engine, "test/RCS_Test",
+         -File_Log (2).Revision, -File_Log (1).Revision) /=
+       "==================================================================="
+        & ASCII.LF & "RCS file: test/RCS/RCS_Test,v"
+        & ASCII.LF & "retrieving revision 1.1"
+        & ASCII.LF & "retrieving revision 1.2"
+        & ASCII.LF & "diff -r1.1 -r1.2"
+        & ASCII.LF & "1c1"
+        & ASCII.LF & "< test"
+        & ASCII.LF & "---"
+        & ASCII.LF & "> modification"
+      then
+         Ada.Text_IO.Put_Line ("Diff error !");
+         return;
+      end if;
    end;
+
+   Ada.Text_IO.Put_Line ("OK. All tests passed !");
 exception
    when E : others => Ada.Text_IO.Put_Line (Exceptions.Exception_Information (E));
 end Test;

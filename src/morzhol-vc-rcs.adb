@@ -19,7 +19,6 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO;
 with Ada.Directories;
 
 with GNAT.Expect;
@@ -37,7 +36,8 @@ package body Morzhol.VC.RCS is
    use Morzhol.OS;
    use Morzhol.Strings;
 
-   Cmd : constant String := "cmd.exe";
+   Cmd          : constant String := "cmd.exe";
+   Diff_Rev_Opt : constant String := "-r";
 
    Cmd_Option : aliased String := "/c";
    Sh_Option  : aliased String := "sh";
@@ -50,6 +50,8 @@ package body Morzhol.VC.RCS is
 
    Log_Command       : aliased String := "rlog";
    Log_Total_Rev_Opt : aliased String := "-h";
+
+   Diff_Command : aliased String := "rcsdiff";
 
    -----------
    --  Add  --
@@ -73,51 +75,113 @@ package body Morzhol.VC.RCS is
    is
       pragma Unreferenced (Engine);
 
+      use type Expect.Expect_Match;
+
       Pd      : Expect.Process_Descriptor;
       Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
       Result  : Expect.Expect_Match;
 
-      File_To_Commit : constant OS_Lib.String_Access := new String'(Filename);
+      File_To_Commit : OS_Lib.String_Access := new String'(Filename);
 
    begin
-      Launch_External : begin
-         if Is_Windows then
-            Expect.Non_Blocking_Spawn
-              (Pd, Cmd,
-               OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                     2 => Sh_Option'Access,
-                                     3 => Ci_Command'Access,
-                                     4 => File_To_Commit));
-         else
-            Expect.Non_Blocking_Spawn
-              (Pd, Ci_Command,
-               OS_Lib.Argument_List'(1 => Ci_Opt'Access,
-                                     2 => File_To_Commit),
-              Err_To_Out => True);
+      if Is_Windows then
+         Expect.Non_Blocking_Spawn
+           (Descriptor => Pd,
+            Command    => Cmd,
+            Args       => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
+                                                2 => Sh_Option'Access,
+                                                3 => Ci_Command'Access,
+                                                4 => Ci_Opt'Access,
+                                                5 => File_To_Commit),
+            Err_To_Out => True);
+      else
+         Expect.Non_Blocking_Spawn
+           (Descriptor => Pd,
+            Command    => Ci_Command,
+            Args       => OS_Lib.Argument_List'(1 => Ci_Opt'Access,
+                                                2 => File_To_Commit),
+            Err_To_Out => True);
 
-         end if;
+      end if;
 
-         Expect.Send (Pd, Message);
-         Expect.Send (Pd, ".");
-      end Launch_External;
+      Expect.Send (Pd, Message);
+      Expect.Send (Pd, ".");
 
-      Read_Out : begin
-         Expect.Expect
-           (Pd, Result, ".*\n.*\n.*", Matched);
-      exception
-         when Expect.Process_Died =>
-            return False;
-      end Read_Out;
+      OS_Lib.Free (File_To_Commit);
 
-      case Result is
-         when 1 => Expect.Expect (Pd, Result, ".*");
-         when Expect.Expect_Timeout =>
-            return False;
-         when others =>
-            null;
-      end case;
-      return True;
+      Expect.Expect (Pd, Result, ".*\n.*\n.*", Matched);
+
+      if Result = 1 then
+         Expect.Expect (Pd, Result, ".*");
+         Expect.Close (Pd);
+         return True;
+      else
+         Expect.Close (Pd);
+         return False;
+      end if;
+   exception
+      when others =>
+         OS_Lib.Free (File_To_Commit);
+         return False;
    end Commit;
+
+   ------------
+   --  Diff  --
+   ------------
+
+   function Diff
+     (Engine       : in RCS;
+      Filename     : in String;
+      From_Version : in String;
+      To_Version   : in String)
+     return String
+   is
+      pragma Unreferenced (Engine);
+
+      Targetted_File : OS_Lib.String_Access := new String'(Filename);
+      Rev1           : OS_Lib.String_Access :=
+                         new String'(Diff_Rev_Opt & From_Version);
+      Rev2           : OS_Lib.String_Access :=
+                         new String'(Diff_Rev_Opt & To_Version);
+
+      Status : aliased Integer;
+      Result : Unbounded_String;
+   begin
+      if Is_Windows then
+         Result := +Expect.Get_Command_Output
+           (Command    => Cmd,
+            Arguments  => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
+                                               2 => Sh_Option'Access,
+                                               3 => Diff_Command'Access,
+                                               4 => Targetted_File),
+            Input      => "",
+            Status     => Status'Access,
+            Err_To_Out => True);
+      else
+         Result := +Expect.Get_Command_Output
+           (Command    => Diff_Command,
+            Arguments  => OS_Lib.Argument_List'(1 => Rev1,
+                                                2 => Rev2,
+                                                3 => Targetted_File),
+            Input      => "",
+            Status     => Status'Access,
+            Err_To_Out => True);
+
+      end if;
+
+      OS_Lib.Free (Targetted_File);
+      OS_Lib.Free (Rev1);
+      OS_Lib.Free (Rev2);
+
+      return -Result;
+   exception
+      when others =>
+         OS_Lib.Free (Targetted_File);
+         OS_Lib.Free (Rev1);
+         OS_Lib.Free (Rev2);
+
+         return -Result;
+   end Diff;
 
    ---------------
    --  Get_Log  --
@@ -130,52 +194,56 @@ package body Morzhol.VC.RCS is
      return Log
    is
       pragma Unreferenced (Engine, Limit);
-      Targetted_File : constant OS_Lib.String_Access := new String'(Filename);
+      Targetted_File : OS_Lib.String_Access := new String'(Filename);
 
       function Get_Revision_Number return Natural;
       --  Return the number of revision for that file
+      --  or 0 if an error has occured
 
       function Get_Revision_Number return Natural is
+         use type Expect.Expect_Match;
+
          Pd      : Expect.Process_Descriptor;
          Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
          Result  : Expect.Expect_Match;
       begin
          if Is_Windows then
             Expect.Non_Blocking_Spawn
-              (Pd, Cmd,
-               OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                     2 => Sh_Option'Access,
-                                     3 => Log_Command'Access,
-                                     4 => Log_Total_Rev_Opt'Access,
-                                     5 => Targetted_File));
+              (Descriptor => Pd,
+               Command    => Cmd,
+               Args       => OS_Lib.Argument_List'
+                 (1 => Cmd_Option'Access,
+                  2 => Sh_Option'Access,
+                  3 => Log_Command'Access,
+                  4 => Log_Total_Rev_Opt'Access,
+                  5 => Targetted_File),
+               Err_To_Out => True);
          else
             Expect.Non_Blocking_Spawn
-              (Pd, Log_Command,
-               OS_Lib.Argument_List'(1 => Log_Total_Rev_Opt'Access,
-                                     2 => Targetted_File),
+              (Descriptor => Pd,
+               Command    => Log_Command,
+               Args       => OS_Lib.Argument_List'
+                 (1 => Log_Total_Rev_Opt'Access,
+                  2 => Targetted_File),
                Err_To_Out => True);
          end if;
 
-         Read_Out : begin
-            Expect.Expect
-              (Pd, Result, "total revisions: (.*)", Matched);
-         exception
-            when Expect.Process_Died =>
-               return 0;
-         end Read_Out;
-         case Result is
-            when 1 => return Natural'Value
-               (Expect.Expect_Out (Pd)
-                  (Matched (1).First .. Matched (1).Last));
-            when Expect.Expect_Timeout =>
-               Text_IO.Put_Line (Expect.Expect_Out (Pd));
-               return 0;
-            when others =>
-               Text_IO.Put_Line (Expect.Expect_Out (Pd));
-               null;
-         end case;
+         Expect.Expect
+           (Descriptor => Pd,
+            Result     => Result,
+            Regexp     => "total revisions: (.*)",
+            Matched    => Matched);
 
-         return 1;
+         if Result = 1 then
+            return Natural'Value
+              (Expect.Expect_Out (Pd)
+                 (Matched (1).First .. Matched (1).Last));
+         end if;
+
+         return 0;
+      exception
+         when others =>
+            return 0;
       end Get_Revision_Number;
 
       Pd      : Expect.Process_Descriptor;
@@ -187,13 +255,19 @@ package body Morzhol.VC.RCS is
       Current  : Positive := 1;
 
    begin
+
+      if Revision_Number = 0 then
+         return File_Log;
+      end if;
+
       if Is_Windows then
          Expect.Non_Blocking_Spawn
            (Pd, Cmd,
             OS_Lib.Argument_List'(1 => Cmd_Option'Access,
                                   2 => Sh_Option'Access,
                                   3 => Log_Command'Access,
-                                  4 => Targetted_File));
+                                  4 => Targetted_File),
+            Err_To_Out => True);
       else
          Expect.Non_Blocking_Spawn
            (Pd, Log_Command,
@@ -230,6 +304,9 @@ package body Morzhol.VC.RCS is
                exit;
          end Read_Out;
       end loop;
+
+      OS_Lib.Free (Targetted_File);
+
       return File_Log;
    end Get_Log;
 
@@ -248,43 +325,46 @@ package body Morzhol.VC.RCS is
       Pd        : Expect.Process_Descriptor;
       Result    : Expect.Expect_Match;
       Matched   : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
-      File_To_Lock : constant OS_Lib.String_Access := new String'(Filename);
+
+      File_To_Lock : OS_Lib.String_Access := new String'(Filename);
 
    begin
       if not Directories.Exists (Local_RCS_Dir) then
          Directories.Create_Directory (Local_RCS_Dir);
       end if;
 
-      Launch_External : begin
-         if Is_Windows then
-            Expect.Non_Blocking_Spawn
-              (Pd, Cmd,
-               OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                     2 => Sh_Option'Access,
-                                     3 => Co_Command'Access,
-                                     4 => Co_Opt'Access,
-                                     5 => File_To_Lock),
-              Err_To_Out => True);
-         else
-            Expect.Non_Blocking_Spawn
-              (Pd, "co",
-               OS_Lib.Argument_List'(1 => Co_Opt'Access,
-                                     2 => File_To_Lock),
-               Err_To_Out => True);
-         end if;
-      end Launch_External;
+      if Is_Windows then
+         Expect.Non_Blocking_Spawn
+           (Descriptor => Pd,
+            Command    => Cmd,
+            Args       => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
+                                                2 => Sh_Option'Access,
+                                                3 => Co_Command'Access,
+                                                4 => Co_Opt'Access,
+                                                5 => File_To_Lock),
+            Err_To_Out => True);
+      else
+         Expect.Non_Blocking_Spawn
+           (Descriptor => Pd,
+            Command    => Co_Command,
+            Args       => OS_Lib.Argument_List'(1 => Co_Opt'Access,
+                                                2 => File_To_Lock),
+            Err_To_Out => True);
+      end if;
+
+      OS_Lib.Free (File_To_Lock);
 
       Read_Out : begin
          Expect.Expect
-           (Pd, Result, "locked", Matched);
+           (Pd, Result, "locked.*\n.*done.*", Matched);
       exception
          when Expect.Process_Died =>
             return False;
       end Read_Out;
 
       case Result is
-         when 1 => Expect.Expect (Pd, Result, ".*");
-            delay 0.2; -- ???
+         when 1 =>
+            Expect.Close (Pd);
             return True;
          when Expect.Expect_Timeout =>
             return False;
@@ -312,5 +392,4 @@ package body Morzhol.VC.RCS is
 
       return False;
    end Remove;
-
 end Morzhol.VC.RCS;
