@@ -1,0 +1,14 @@
+*~
+*.ali
+*.o
+*.db
+*.out
+*.log.*
+*log.200*
+*.orig
+*.patch
+**b~*
+test/_*
+test/RCS*
+test/test
+lib
