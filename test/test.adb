@@ -25,6 +25,7 @@ with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Command_Line;
+with Morzhol.VC;
 
 procedure Test is
 
@@ -73,7 +74,7 @@ begin
    if not Lock (VCS_Engine, "test/RCS_Test") then
       --  Try to add
 
-      if not Add (VCS_Engine, "test/RCS_Test")
+      if not Add (VCS_Engine, "test/RCS_Test", "initial_author")
         or else not Lock (VCS_Engine, "test/RCS_Test")
       then
          Ada.Text_IO.Put_Line ("Can not Lock RCS Test !");
@@ -94,7 +95,10 @@ begin
    end Change_Test_File;
 
 
-   if not Commit (VCS_Engine, "test/RCS_Test", "first commit by test.adb") then
+   if not Commit (Engine   => VCS_Engine,
+                  Filename => "test/RCS_Test",
+                  Message  => "first commit by test.adb",
+                  Author   => "author") then
       Ada.Text_IO.Put_Line ("Commit failure");
       return;
    end if;
@@ -115,6 +119,8 @@ begin
         & ASCII.LF & "< test"
         & ASCII.LF & "---"
         & ASCII.LF & "> modification"
+        or else -File_Log (1).Author /= "author"
+        or else -File_Log (2).Author /= "initial_author"
       then
          Ada.Text_IO.Put_Line ("Diff error !");
          return;
