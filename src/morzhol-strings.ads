@@ -23,6 +23,7 @@ with Ada.Strings.Unbounded;
 
 package Morzhol.Strings is
 
+   use Ada;
    use Ada.Strings.Unbounded;
 
    function "+" (Source : in String) return Unbounded_String

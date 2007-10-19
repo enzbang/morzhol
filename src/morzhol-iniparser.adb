@@ -36,8 +36,6 @@ package body Morzhol.Iniparser is
 
    Parameters : array (Parameter_Name) of Unbounded_String;
 
-   --------------------------------------------------------------------------
-
    package body IO is
 
       package Parameter_IO is new Ada.Text_IO.Enumeration_IO (Parameter_Name);

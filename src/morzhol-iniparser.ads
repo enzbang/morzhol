@@ -88,10 +88,10 @@ package Morzhol.Iniparser is
       type T is private;
       type Vector is array (Positive range <>) of T;
       with procedure Get
-        (From : in     String;                               --  String -> T
+        (From : in     String;
          Item :    out T;
          Last :    out Positive) is <>;
-      with function Image (Item : in T) return String is <>; --  T -> String
+      with function Image (Item : in T) return String is <>;
    package Vector_Values is
 
       function Get_Value (Parameter : in Parameter_Name) return Vector;
