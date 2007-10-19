@@ -19,9 +19,22 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
+with Ada.Strings.Unbounded;
+
 package Morzhol.VC is
 
+   use Ada.Strings.Unbounded;
+
    type VCS is interface;
+
+   type Commit_Log is tagged record
+      Revision : Unbounded_String;
+      Date     : Unbounded_String;
+      Author   : Unbounded_String;
+      Message  : Unbounded_String;
+   end record;
+
+   type Log is array (Positive range <>) of Commit_Log;
 
    function Commit
      (Engine   : in VCS;
@@ -41,5 +54,12 @@ package Morzhol.VC is
    function Remove
      (Engine : in VCS; Filename : in String) return Boolean is abstract;
    --  Remove a file
+
+   function Get_Log
+     (Engine   : in VCS;
+      Filename : in String;
+      Limit    : in Natural := 0)
+     return Log is abstract;
+   --  Returns the log of the given file. Limit = 0 means no limit.
 
 end Morzhol.VC;

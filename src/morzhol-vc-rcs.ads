@@ -40,4 +40,10 @@ package Morzhol.VC.RCS is
    function Remove (Engine : in RCS; Filename : in String) return Boolean;
    --  Remove a file
 
+   function Get_Log
+     (Engine   : in RCS;
+      Filename : in String;
+      Limit    : in Natural := 0)
+     return Log;
+
 end Morzhol.VC.RCS;

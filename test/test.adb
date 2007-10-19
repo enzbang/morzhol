@@ -76,6 +76,8 @@ begin
    else
       --  Try to add
 
+      delay 0.2;
+
       if Add (VCS_Engine, "test/RCS_Test") and
         then Lock (VCS_Engine, "test/RCS_Test")
       then
@@ -100,6 +102,7 @@ begin
       Close (File_To_Change);
    end Change_Test_File;
 
+   delay 0.2;
 
    if Commit (VCS_Engine, "test/RCS_Test", "first commit by test.adb") then
       Ada.Text_IO.Put_Line ("Ok - 4");
@@ -109,4 +112,14 @@ begin
       Set_Exit_Status (Failure);
       return;
    end if;
+
+   delay 0.2;
+
+   declare
+      File_Log : constant Morzhol.VC.Log := Get_Log (VCS_Engine, "test/RCS_Test");
+   begin
+      for K in File_Log'range loop
+         Ada.Text_IO.Put_Line (-File_Log (K).Message);
+      end loop;
+   end;
 end Test;
