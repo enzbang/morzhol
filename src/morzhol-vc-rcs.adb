@@ -78,10 +78,9 @@ package body Morzhol.VC.RCS is
       use type Expect.Expect_Match;
 
       Pd      : Expect.Process_Descriptor;
-      Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
       Result  : Expect.Expect_Match;
 
-      File_To_Commit : OS_Lib.String_Access := new String'(Filename);
+      RCS_File : OS_Lib.String_Access := new String'(Filename);
 
    begin
       if Is_Windows then
@@ -92,14 +91,14 @@ package body Morzhol.VC.RCS is
                                                 2 => Sh_Option'Access,
                                                 3 => Ci_Command'Access,
                                                 4 => Ci_Opt'Access,
-                                                5 => File_To_Commit),
+                                                5 => RCS_File),
             Err_To_Out => True);
       else
          Expect.Non_Blocking_Spawn
            (Descriptor => Pd,
             Command    => Ci_Command,
             Args       => OS_Lib.Argument_List'(1 => Ci_Opt'Access,
-                                                2 => File_To_Commit),
+                                                2 => RCS_File),
             Err_To_Out => True);
 
       end if;
@@ -107,21 +106,16 @@ package body Morzhol.VC.RCS is
       Expect.Send (Pd, Message);
       Expect.Send (Pd, ".");
 
-      OS_Lib.Free (File_To_Commit);
+      OS_Lib.Free (RCS_File);
 
-      Expect.Expect (Pd, Result, ".*\n.*\n.*", Matched);
+      Expect.Expect (Pd, Result, "done");
+      Expect.Close (Pd);
 
-      if Result = 1 then
-         Expect.Expect (Pd, Result, ".*");
-         Expect.Close (Pd);
-         return True;
-      else
-         Expect.Close (Pd);
-         return False;
-      end if;
+      return Result = 1;
+
    exception
-      when others =>
-         OS_Lib.Free (File_To_Commit);
+      when Expect.Invalid_Process | Expect.Process_Died =>
+         OS_Lib.Free (RCS_File);
          return False;
    end Commit;
 
@@ -138,11 +132,11 @@ package body Morzhol.VC.RCS is
    is
       pragma Unreferenced (Engine);
 
-      Targetted_File : OS_Lib.String_Access := new String'(Filename);
-      Rev1           : OS_Lib.String_Access :=
-                         new String'(Diff_Rev_Opt & From_Version);
-      Rev2           : OS_Lib.String_Access :=
-                         new String'(Diff_Rev_Opt & To_Version);
+      RCS_File : OS_Lib.String_Access := new String'(Filename);
+      Rev1     : OS_Lib.String_Access :=
+                   new String'(Diff_Rev_Opt & From_Version);
+      Rev2     : OS_Lib.String_Access :=
+                   new String'(Diff_Rev_Opt & To_Version);
 
       Status : aliased Integer;
       Result : Unbounded_String;
@@ -151,9 +145,11 @@ package body Morzhol.VC.RCS is
          Result := +Expect.Get_Command_Output
            (Command    => Cmd,
             Arguments  => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                               2 => Sh_Option'Access,
-                                               3 => Diff_Command'Access,
-                                               4 => Targetted_File),
+                                                2 => Sh_Option'Access,
+                                                3 => Diff_Command'Access,
+                                                4 => Rev1,
+                                                5 => Rev2,
+                                                6 => RCS_File),
             Input      => "",
             Status     => Status'Access,
             Err_To_Out => True);
@@ -162,21 +158,21 @@ package body Morzhol.VC.RCS is
            (Command    => Diff_Command,
             Arguments  => OS_Lib.Argument_List'(1 => Rev1,
                                                 2 => Rev2,
-                                                3 => Targetted_File),
+                                                3 => RCS_File),
             Input      => "",
             Status     => Status'Access,
             Err_To_Out => True);
 
       end if;
 
-      OS_Lib.Free (Targetted_File);
+      OS_Lib.Free (RCS_File);
       OS_Lib.Free (Rev1);
       OS_Lib.Free (Rev2);
 
       return -Result;
    exception
-      when others =>
-         OS_Lib.Free (Targetted_File);
+      when Expect.Invalid_Process | Expect.Process_Died =>
+         OS_Lib.Free (RCS_File);
          OS_Lib.Free (Rev1);
          OS_Lib.Free (Rev2);
 
@@ -194,14 +190,16 @@ package body Morzhol.VC.RCS is
      return Log
    is
       pragma Unreferenced (Engine, Limit);
-      Targetted_File : OS_Lib.String_Access := new String'(Filename);
+      use type Expect.Expect_Match;
+
+      RCS_File : OS_Lib.String_Access := new String'(Filename);
 
       function Get_Revision_Number return Natural;
       --  Return the number of revision for that file
       --  or 0 if an error has occured
 
       function Get_Revision_Number return Natural is
-         use type Expect.Expect_Match;
+
 
          Pd      : Expect.Process_Descriptor;
          Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
@@ -216,7 +214,7 @@ package body Morzhol.VC.RCS is
                   2 => Sh_Option'Access,
                   3 => Log_Command'Access,
                   4 => Log_Total_Rev_Opt'Access,
-                  5 => Targetted_File),
+                  5 => RCS_File),
                Err_To_Out => True);
          else
             Expect.Non_Blocking_Spawn
@@ -224,7 +222,7 @@ package body Morzhol.VC.RCS is
                Command    => Log_Command,
                Args       => OS_Lib.Argument_List'
                  (1 => Log_Total_Rev_Opt'Access,
-                  2 => Targetted_File),
+                  2 => RCS_File),
                Err_To_Out => True);
          end if;
 
@@ -238,12 +236,9 @@ package body Morzhol.VC.RCS is
             return Natural'Value
               (Expect.Expect_Out (Pd)
                  (Matched (1).First .. Matched (1).Last));
-         end if;
-
-         return 0;
-      exception
-         when others =>
+         else
             return 0;
+         end if;
       end Get_Revision_Number;
 
       Pd      : Expect.Process_Descriptor;
@@ -262,16 +257,18 @@ package body Morzhol.VC.RCS is
 
       if Is_Windows then
          Expect.Non_Blocking_Spawn
-           (Pd, Cmd,
-            OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                  2 => Sh_Option'Access,
-                                  3 => Log_Command'Access,
-                                  4 => Targetted_File),
+           (Descriptor => Pd,
+            Command    => Cmd,
+            Args       => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
+                                                2 => Sh_Option'Access,
+                                                3 => Log_Command'Access,
+                                                4 => RCS_File),
             Err_To_Out => True);
       else
          Expect.Non_Blocking_Spawn
-           (Pd, Log_Command,
-            OS_Lib.Argument_List'(1 => Targetted_File),
+           (Descriptor => Pd,
+            Command    => Log_Command,
+            Args       => OS_Lib.Argument_List'(1 => RCS_File),
             Err_To_Out => True);
       end if;
 
@@ -280,10 +277,12 @@ package body Morzhol.VC.RCS is
             CL : Commit_Log;
          begin
             Expect.Expect
-              (Pd, Result,
-               "\nrevision ([1-9\.]+)\ndate: (.*?);"
-                 & ".*author: ([a-zA-Z]+);.*\n(.*)",
-               Matched);
+              (Descriptor => Pd,
+               Result     => Result,
+               Regexp     => "\nrevision ([1-9\.]+)\ndate: (.*?);"
+               & ".*author: ([a-zA-Z]+);.*\n(.*)",
+               Matched    => Matched);
+
             CL.Revision :=
               +Expect.Expect_Out (Pd)
               (Matched (1).First .. Matched (1).Last);
@@ -299,15 +298,17 @@ package body Morzhol.VC.RCS is
 
             File_Log (Current) := CL;
             Current := Current + 1;
-         exception
-            when Expect.Process_Died =>
-               exit;
          end Read_Out;
       end loop;
 
-      OS_Lib.Free (Targetted_File);
+      OS_Lib.Free (RCS_File);
 
       return File_Log;
+
+   exception
+      when Expect.Invalid_Process | Expect.Process_Died =>
+         OS_Lib.Free (RCS_File);
+         return File_Log;
    end Get_Log;
 
    ------------
@@ -317,6 +318,7 @@ package body Morzhol.VC.RCS is
    function Lock
      (Engine : in RCS; Filename : in String) return Boolean is
       pragma Unreferenced (Engine);
+      use type Expect.Expect_Match;
 
       Local_RCS_Dir : constant String
         := Directories.Containing_Directory (Filename)
@@ -326,7 +328,7 @@ package body Morzhol.VC.RCS is
       Result    : Expect.Expect_Match;
       Matched   : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
 
-      File_To_Lock : OS_Lib.String_Access := new String'(Filename);
+      RCS_File : OS_Lib.String_Access := new String'(Filename);
 
    begin
       if not Directories.Exists (Local_RCS_Dir) then
@@ -341,36 +343,30 @@ package body Morzhol.VC.RCS is
                                                 2 => Sh_Option'Access,
                                                 3 => Co_Command'Access,
                                                 4 => Co_Opt'Access,
-                                                5 => File_To_Lock),
+                                                5 => RCS_File),
             Err_To_Out => True);
       else
          Expect.Non_Blocking_Spawn
            (Descriptor => Pd,
             Command    => Co_Command,
             Args       => OS_Lib.Argument_List'(1 => Co_Opt'Access,
-                                                2 => File_To_Lock),
+                                                2 => RCS_File),
             Err_To_Out => True);
       end if;
 
-      OS_Lib.Free (File_To_Lock);
+      OS_Lib.Free (RCS_File);
 
-      Read_Out : begin
-         Expect.Expect
-           (Pd, Result, "locked.*\n.*done.*", Matched);
-      exception
-         when Expect.Process_Died =>
-            return False;
-      end Read_Out;
+      Expect.Expect
+        (Pd, Result, "locked.*\n.*done.*", Matched);
 
-      case Result is
-         when 1 =>
-            Expect.Close (Pd);
-            return True;
-         when Expect.Expect_Timeout =>
-            return False;
-         when others =>
-            null;
-      end case;
+      if Result = 1 then
+         Expect.Close (Pd);
+         return True;
+      end if;
+
+      return False;
+   exception
+      when Expect.Invalid_Process | Expect.Process_Died =>
       return False;
    end Lock;
 
