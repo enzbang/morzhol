@@ -23,6 +23,7 @@ with Morzhol.Strings;
 with Morzhol.VC.RCS;
 with Ada.Text_IO;
 with Ada.Directories;
+with Ada.Exceptions;
 with Ada.Command_Line;
 
 procedure Test is
@@ -46,8 +47,9 @@ begin
       Ada.Text_IO.Put_Line ("Ok - 1");
       Set_Exit_Status (Success);
    else
-      Ada.Text_IO.Put_Line ("Error");
+      Ada.Text_IO.Put_Line ("HTML_To_Text Error");
       Set_Exit_Status (Failure);
+      return;
    end if;
 
    Create_Test_File : declare
@@ -76,22 +78,20 @@ begin
    else
       --  Try to add
 
-      delay 0.2;
-
       if Add (VCS_Engine, "test/RCS_Test") and
         then Lock (VCS_Engine, "test/RCS_Test")
       then
            Ada.Text_IO.Put_Line ("Ok - 3");
            Set_Exit_Status (Success);
         else
-           Ada.Text_IO.Put_Line ("Error - :(");
+           Ada.Text_IO.Put_Line ("Can not Lock RCS Test !");
            Set_Exit_Status (Failure);
            return;
       end if;
    end if;
 
-
-  Change_Test_File : declare
+   Ada.Text_IO.Put_Line ("Ok ??");
+   Change_Test_File : declare
      File_To_Change : File_Type;
    begin
       Open (File => File_To_Change,
@@ -100,20 +100,19 @@ begin
 
       Put (File_To_Change, "modification");
       Close (File_To_Change);
+
    end Change_Test_File;
 
-   delay 0.2;
+   Ada.Text_IO.Put_Line ("Ok ??");
 
    if Commit (VCS_Engine, "test/RCS_Test", "first commit by test.adb") then
       Ada.Text_IO.Put_Line ("Ok - 4");
       Set_Exit_Status (Success);
    else
-      Ada.Text_IO.Put_Line ("Error - :(");
+      Ada.Text_IO.Put_Line ("Commit failure");
       Set_Exit_Status (Failure);
       return;
    end if;
-
-   delay 0.2;
 
    declare
       File_Log : constant Morzhol.VC.Log := Get_Log (VCS_Engine, "test/RCS_Test");
@@ -122,4 +121,6 @@ begin
          Ada.Text_IO.Put_Line (-File_Log (K).Message);
       end loop;
    end;
+exception
+   when E : others => Ada.Text_IO.Put_Line (Exceptions.Exception_Information (E));
 end Test;

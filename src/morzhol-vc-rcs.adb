@@ -104,19 +104,16 @@ package body Morzhol.VC.RCS is
       Read_Out : begin
          Expect.Expect
            (Pd, Result, ".*\n.*\n.*", Matched);
-         Text_IO.Put_Line (Expect.Expect_Out (Pd));
       exception
          when Expect.Process_Died =>
             return False;
       end Read_Out;
 
       case Result is
-         when 1 => Text_IO.Put_Line (Expect.Expect_Out (Pd));
+         when 1 => Expect.Expect (Pd, Result, ".*");
          when Expect.Expect_Timeout =>
-            Text_IO.Put_Line (Expect.Expect_Out (Pd));
             return False;
          when others =>
-            Text_IO.Put_Line (Expect.Expect_Out (Pd));
             null;
       end case;
       return True;
@@ -286,7 +283,8 @@ package body Morzhol.VC.RCS is
       end Read_Out;
 
       case Result is
-         when 1 => Text_IO.Put_Line (Expect.Expect_Out (Pd));
+         when 1 => Expect.Expect (Pd, Result, ".*");
+            delay 0.2; -- ???
             return True;
          when Expect.Expect_Timeout =>
             return False;
