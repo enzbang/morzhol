@@ -38,17 +38,15 @@ procedure Test is
    VCS_Engine : RCS;
 begin
 
-   if HTML_To_Text ("<a href='http://morzhol.google.code.com'>Morzhol</a>")
-     = "Morzhol"
-     and then HTML_To_Text ("A <em>small</em> test") = "A small test"
-     and then HTML_To_Text ("for <br /><hr /><br /> html_to_text")
-     = "for  html_to_text"
+   Set_Exit_Status (Failure);
+
+   if HTML_To_Text
+     ("<a href='http://morzhol.google.code.com'>Morzhol</a>") /= "Morzhol"
+     or else HTML_To_Text ("A <em>small</em> test") /= "A small test"
+     or else HTML_To_Text
+       ("for <br /><hr /><br /> html_to_text") /= "for  html_to_text"
    then
-      Ada.Text_IO.Put_Line ("Ok - 1");
-      Set_Exit_Status (Success);
-   else
       Ada.Text_IO.Put_Line ("HTML_To_Text Error");
-      Set_Exit_Status (Failure);
       return;
    end if;
 
@@ -72,28 +70,20 @@ begin
       Close (File_To_Create);
    end Create_Test_File;
 
-   if Lock (VCS_Engine, "test/RCS_Test") then
-      Ada.Text_IO.Put_Line ("Ok - 2");
-      Set_Exit_Status (Success);
-   else
+   if not Lock (VCS_Engine, "test/RCS_Test") then
       --  Try to add
 
-      if Add (VCS_Engine, "test/RCS_Test") and
-        then Lock (VCS_Engine, "test/RCS_Test")
+      if not Add (VCS_Engine, "test/RCS_Test")
+        or else not Lock (VCS_Engine, "test/RCS_Test")
       then
-           Ada.Text_IO.Put_Line ("Ok - 3");
-           Set_Exit_Status (Success);
-        else
-           Ada.Text_IO.Put_Line ("Can not Lock RCS Test !");
-           Set_Exit_Status (Failure);
-           return;
+         Ada.Text_IO.Put_Line ("Can not Lock RCS Test !");
+         return;
       end if;
    end if;
 
    Change_Test_File : declare
      File_To_Change : File_Type;
    begin
-
       Open (File => File_To_Change,
             Mode => Out_File,
             Name => "test/RCS_Test");
@@ -104,12 +94,8 @@ begin
    end Change_Test_File;
 
 
-   if Commit (VCS_Engine, "test/RCS_Test", "first commit by test.adb") then
-      Ada.Text_IO.Put_Line ("Ok - 4");
-      Set_Exit_Status (Success);
-   else
+   if not Commit (VCS_Engine, "test/RCS_Test", "first commit by test.adb") then
       Ada.Text_IO.Put_Line ("Commit failure");
-      Set_Exit_Status (Failure);
       return;
    end if;
 
@@ -117,10 +103,6 @@ begin
       File_Log : constant Morzhol.VC.Log :=
                    Get_Log (VCS_Engine, "test/RCS_Test");
    begin
-      for K in File_Log'range loop
-         Ada.Text_IO.Put_Line (-File_Log (K).Message);
-         Ada.Text_IO.Put_Line (-File_Log (K).Revision);
-      end loop;
 
       if Diff (VCS_Engine, "test/RCS_Test",
          -File_Log (2).Revision, -File_Log (1).Revision) /=
@@ -140,6 +122,7 @@ begin
    end;
 
    Ada.Text_IO.Put_Line ("OK. All tests passed !");
+   Set_Exit_Status (Success);
 exception
    when E : others => Ada.Text_IO.Put_Line (Exceptions.Exception_Information (E));
 end Test;
