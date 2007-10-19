@@ -59,5 +59,4 @@ package Morzhol.VC.RCS is
      return String;
    --  Returns the diff
 
-
 end Morzhol.VC.RCS;

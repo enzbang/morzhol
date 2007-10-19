@@ -216,7 +216,6 @@ package body Morzhol.VC.RCS is
 
       function Get_Revision_Number return Natural is
 
-
          Pd      : Expect.Process_Descriptor;
          Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
          Result  : Expect.Expect_Match;

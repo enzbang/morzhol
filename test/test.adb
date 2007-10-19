@@ -94,7 +94,6 @@ begin
 
    end Change_Test_File;
 
-
    if not Commit (Engine   => VCS_Engine,
                   Filename => "test/RCS_Test",
                   Message  => "first commit by test.adb",
@@ -130,5 +129,6 @@ begin
    Ada.Text_IO.Put_Line ("OK. All tests passed !");
    Set_Exit_Status (Success);
 exception
-   when E : others => Ada.Text_IO.Put_Line (Exceptions.Exception_Information (E));
+   when E : others =>
+      Ada.Text_IO.Put_Line (Exceptions.Exception_Information (E));
 end Test;
