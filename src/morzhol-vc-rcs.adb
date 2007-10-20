@@ -54,6 +54,15 @@ package body Morzhol.VC.RCS is
 
    Diff_Command : aliased String := "rcsdiff";
 
+   function Commit
+     (Engine           : in RCS;
+      Filename         : in String;
+      Message          : in String;
+      Author           : in String;
+      Initial_Revision : in Boolean)
+     return Boolean;
+   --  Commit or Add if Initial_Revision is True
+
    -----------
    --  Add  --
    -----------
@@ -64,11 +73,19 @@ package body Morzhol.VC.RCS is
       Author   : in String := "")
       return Boolean
    is
+      Local_RCS_Dir : constant String
+        := Directories.Containing_Directory (Filename)
+        & Directory_Separator & "RCS";
    begin
-      return Commit (Engine   => Engine,
-                     Filename => Filename,
-                     Message  => "File : " & Filename,
-                     Author   => Author);
+      if not Directories.Exists (Local_RCS_Dir) then
+         Directories.Create_Directory (Local_RCS_Dir);
+      end if;
+
+      return Commit (Engine           => Engine,
+                     Filename         => Filename,
+                     Message          => "File : " & Filename,
+                     Author           => Author,
+                     Initial_Revision => True);
    end Add;
 
    --------------
@@ -82,6 +99,27 @@ package body Morzhol.VC.RCS is
       Author   : in String := "")
      return Boolean
    is
+   begin
+      return Commit (Engine           => Engine,
+                     Filename         => Filename,
+                     Message          => Message,
+                     Author           => Author,
+                     Initial_Revision => False);
+   end Commit;
+
+   --------------
+   --  Commit  --
+   --------------
+
+   function Commit
+     (Engine           : in RCS;
+      Filename         : in String;
+      Message          : in String;
+      Author           : in String;
+      Initial_Revision : in Boolean)
+     return Boolean
+   is
+
       pragma Unreferenced (Engine);
 
       use type Expect.Expect_Match;
@@ -89,10 +127,16 @@ package body Morzhol.VC.RCS is
       Pd      : Expect.Process_Descriptor;
       Result  : Expect.Expect_Match;
 
-      RCS_File   : OS_Lib.String_Access := new String'(Filename);
-      RCS_Author : OS_Lib.String_Access;
+      RCS_File    : OS_Lib.String_Access := new String'(Filename);
+      RCS_Message : OS_Lib.String_Access;
+      RCS_Author  : OS_Lib.String_Access;
 
    begin
+      if Initial_Revision then
+         RCS_Message := new String'("-t-" & Message);
+      else
+         RCS_Message := new String'("-m" & Message);
+      end if;
 
       if Author /= "" then
          RCS_Author := new String'(Ci_Author_Opt & Author);
@@ -107,7 +151,8 @@ package body Morzhol.VC.RCS is
                                                 3 => Ci_Command'Access,
                                                 4 => Ci_Opt'Access,
                                                 5 => RCS_Author,
-                                                6 => RCS_File),
+                                                6 => RCS_Message,
+                                                7 => RCS_File),
             Err_To_Out => True);
       else
          Expect.Non_Blocking_Spawn
@@ -115,13 +160,10 @@ package body Morzhol.VC.RCS is
             Command    => Ci_Command,
             Args       => OS_Lib.Argument_List'(1 => Ci_Opt'Access,
                                                 2 => RCS_Author,
-                                                3 => RCS_File),
+                                                3 => RCS_Message,
+                                                4 => RCS_File),
             Err_To_Out => True);
-
       end if;
-
-      Expect.Send (Pd, Message);
-      Expect.Send (Pd, ".");
 
       OS_Lib.Free (RCS_File);
       OS_Lib.Free (RCS_Author);
@@ -135,6 +177,7 @@ package body Morzhol.VC.RCS is
       when Expect.Invalid_Process | Expect.Process_Died =>
          OS_Lib.Free (RCS_File);
          OS_Lib.Free (RCS_Author);
+         OS_Lib.Free (RCS_Message);
          return False;
    end Commit;
 
