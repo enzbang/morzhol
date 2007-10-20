@@ -76,7 +76,7 @@ package Morzhol.VC is
      return String is abstract;
    --  Returns the diff
 
-   function Image (VCS_Log : Log) return String;
+   function Image (VCS_Log : in Log) return String;
    --  Returns the image of a log
 
 end Morzhol.VC;

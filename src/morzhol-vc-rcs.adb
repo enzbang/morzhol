@@ -65,7 +65,10 @@ package body Morzhol.VC.RCS is
       return Boolean
    is
    begin
-      return Commit (Engine, Filename, "File : " & Filename, Author);
+      return Commit (Engine   => Engine,
+                     Filename => Filename,
+                     Message  => "File : " & Filename,
+                     Author   => Author);
    end Add;
 
    --------------

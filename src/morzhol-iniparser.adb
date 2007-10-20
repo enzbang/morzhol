@@ -30,15 +30,19 @@ package body Morzhol.Iniparser is
    use Ada.Strings;
    use Ada.Strings.Unbounded;
 
-   Max_Line_Length : constant := 1_024;
+   subtype Line_Length is Positive;
 
-   subtype Buffer_String is String (1 .. Max_Line_Length);
+   Min_Line_Length : constant Line_Length := 1;
+   Max_Line_Length : constant Line_Length := 1_024;
+
+   subtype Buffer_String is String (Min_Line_Length .. Max_Line_Length);
 
    Parameters : array (Parameter_Name) of Unbounded_String;
 
    package body IO is
 
-      package Parameter_IO is new Ada.Text_IO.Enumeration_IO (Parameter_Name);
+      package Parameter_IO is
+         new Ada.Text_IO.Enumeration_IO (Enum => Parameter_Name);
       use Parameter_IO;
 
       Config_File : File_Type;

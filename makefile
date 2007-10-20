@@ -22,11 +22,15 @@
 GNAT=gnat
 
 all:
+	$(GNAT) make -Pmorzhol
 
-setup: 
-	-mkdir obj lib
+setup:
+	mkdir -p obj lib
 
 check:
+	gnat check -dd -Pmorzhol -rules -from=morzhol.check
+
+regtests:
 	$(GNAT) make -Ptest/test
 	./test/test
 

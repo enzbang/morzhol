@@ -27,25 +27,35 @@ package body Morzhol.Strings is
 
    function HTML_To_Text (HTML_Source : in String) return String is
 
+      subtype Source_Range is Positive range HTML_Source'Range;
+
       Result  : Unbounded_String;
       Last    : Integer := HTML_Source'First;
       To_Skip : Natural := 0;
 
+      procedure Find_End_Tag (Position : in Source_Range);
+      --  Find end tag
+
+      procedure Find_End_Tag (Position : in Source_Range) is
+      begin
+         for L in Position + 1 .. HTML_Source'Last loop
+            if HTML_Source (L) = '>' then
+               To_Skip := L - Position;
+               Last    := L + 1;
+               return;
+            end if;
+         end loop;
+      end Find_End_Tag;
+
    begin
+      Skip_HTML_Tag :
       for K in HTML_Source'Range loop
          if To_Skip /= 0 then
             To_Skip := To_Skip - 1;
          else
             if HTML_Source (K) = '<' then
                Append (Result, HTML_Source (Last .. K - 1));
-               Search_End_Tag :
-               for L in K + 1 .. HTML_Source'Last loop
-                  if HTML_Source (L) = '>' then
-                     To_Skip := L - K;
-                     Last    := L + 1;
-                     exit Search_End_Tag;
-                  end if;
-               end loop Search_End_Tag;
+               Find_End_Tag (K);
 
                if To_Skip = 0 then
                   --  No last end tag
@@ -53,7 +63,7 @@ package body Morzhol.Strings is
                end if;
             end if;
          end if;
-      end loop;
+      end loop Skip_HTML_Tag;
 
       if Last < HTML_Source'Last then
          Append (Result, HTML_Source (Last .. HTML_Source'Last));
@@ -61,5 +71,4 @@ package body Morzhol.Strings is
 
       return -Result;
    end HTML_To_Text;
-
 end Morzhol.Strings;

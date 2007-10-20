@@ -35,7 +35,9 @@ private
 
    subtype Windows_Host is Boolean;
 
-   DS : array (Windows_Host) of Character := (True => '\', False => '/');
+   type DS_Array is array (Windows_Host) of Character;
+
+   DS : DS_Array := DS_Array'(True => '\', False => '/');
 
    Directory_Separator : constant Character := DS (Is_Windows);
 

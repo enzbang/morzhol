@@ -25,13 +25,13 @@ package body Morzhol.VC is
 
    use Morzhol.Strings;
 
-   function Image (Commit : Commit_Log) return String;
+   function Image (Commit : in Commit_Log) return String;
 
    -----------
    -- Image --
    -----------
 
-   function Image (Commit : Commit_Log) return String is
+   function Image (Commit : in Commit_Log) return String is
    begin
       return -Commit.Revision & ", " & (-Commit.Date) & ", " & (-Commit.Author)
         & ", " & (-Commit.Message);
@@ -41,7 +41,7 @@ package body Morzhol.VC is
    -- Image --
    -----------
 
-   function Image (VCS_Log : Log) return String is
+   function Image (VCS_Log : in Log) return String is
       Result : Unbounded_String;
    begin
       for K in VCS_Log'Range loop
