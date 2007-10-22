@@ -28,4 +28,8 @@ project Test is
    for Exec_Dir use ".";
    for Main use ("test");
 
+   package Compiler is
+      for Default_Switches ("Ada") use ("-gnat05");
+   end Compiler;
+
 end Test;

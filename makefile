@@ -21,6 +21,9 @@
 
 GNAT=gnat
 
+# Required for Windows to find the shared library
+export PATH:=$(shell pwd)/lib:$(PATH)
+
 all:
 	$(GNAT) make -Pmorzhol
 
@@ -28,7 +31,7 @@ setup:
 	mkdir -p obj lib
 
 check:
-	gnat check -dd -Pmorzhol -rules -from=morzhol.check
+	$(GNAT) check -dd -Pmorzhol -rules -from=morzhol.check
 
 regtests:
 	$(GNAT) make -Ptest/test
