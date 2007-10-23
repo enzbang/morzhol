@@ -302,14 +302,10 @@ package body Morzhol.VC.RCS is
          end if;
       end Get_Revision_Number;
 
-      Pd      : Expect.Process_Descriptor;
-      Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 4);
-      Result  : Expect.Expect_Match;
-
       Revision_Number : constant Natural := Get_Revision_Number;
-      File_Log : Log (1 .. Revision_Number);
-      Current  : Positive := 1;
-
+      Current         : Positive         := 1;
+      File_Log        : Log (1 .. Revision_Number);
+      Pd              : Expect.Process_Descriptor;
    begin
 
       if Revision_Number = 0 then
@@ -335,7 +331,9 @@ package body Morzhol.VC.RCS is
 
       loop
          Read_Out : declare
-            CL : Commit_Log;
+            Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 4);
+            Result  : Expect.Expect_Match;
+            CL      : Commit_Log;
          begin
             Expect.Expect
               (Descriptor => Pd,
@@ -388,8 +386,7 @@ package body Morzhol.VC.RCS is
       Pd        : Expect.Process_Descriptor;
       Result    : Expect.Expect_Match;
       Matched   : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
-
-      RCS_File : OS_Lib.String_Access := new String'(Filename);
+      RCS_File  : OS_Lib.String_Access := new String'(Filename);
 
    begin
       if not Directories.Exists (Local_RCS_Dir) then
@@ -417,8 +414,7 @@ package body Morzhol.VC.RCS is
 
       OS_Lib.Free (RCS_File);
 
-      Expect.Expect
-        (Pd, Result, "locked.*\n.*done.*", Matched);
+      Expect.Expect (Pd, Result, "locked.*\n.*done.*", Matched);
 
       if Result = 1 then
          Expect.Close (Pd);

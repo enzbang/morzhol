@@ -31,9 +31,9 @@ procedure Test is
 
    use Ada;
    use Ada.Text_IO;
+   use Ada.Command_Line;
 
    use Morzhol.Strings;
-   use Ada.Command_Line;
    use Morzhol.VC.RCS;
 
    VCS_Engine : RCS;
@@ -47,7 +47,7 @@ begin
      or else HTML_To_Text
        ("for <br /><hr /><br /> html_to_text") /= "for  html_to_text"
    then
-      Ada.Text_IO.Put_Line ("HTML_To_Text Error");
+      Put_Line ("HTML_To_Text Error");
       return;
    end if;
 
@@ -77,7 +77,7 @@ begin
       if not Add (VCS_Engine, "test/RCS_Test", "initial_author")
         or else not Lock (VCS_Engine, "test/RCS_Test")
       then
-         Ada.Text_IO.Put_Line ("Can not Lock RCS Test !");
+         Put_Line ("Can not Lock RCS Test !");
          return;
       end if;
    end if;
@@ -98,7 +98,7 @@ begin
                   Filename => "test/RCS_Test",
                   Message  => "first commit by test.adb",
                   Author   => "author") then
-      Ada.Text_IO.Put_Line ("Commit failure");
+      Put_Line ("Commit failure");
       return;
    end if;
 
@@ -121,14 +121,14 @@ begin
         or else -File_Log (1).Author /= "author"
         or else -File_Log (2).Author /= "initial_author"
       then
-         Ada.Text_IO.Put_Line ("Diff error !");
+         Put_Line ("Diff error !");
          return;
       end if;
    end;
 
-   Ada.Text_IO.Put_Line ("OK. All tests passed !");
+   Put_Line ("OK. All tests passed !");
    Set_Exit_Status (Success);
 exception
    when E : others =>
-      Ada.Text_IO.Put_Line (Exceptions.Exception_Information (E));
+      Put_Line (Exceptions.Exception_Information (E));
 end Test;
