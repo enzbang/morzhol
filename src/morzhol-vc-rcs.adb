@@ -167,6 +167,7 @@ package body Morzhol.VC.RCS is
 
       OS_Lib.Free (RCS_File);
       OS_Lib.Free (RCS_Author);
+      OS_Lib.Free (RCS_Message);
 
       Expect.Expect (Pd, Result, "done");
       Expect.Close (Pd);
