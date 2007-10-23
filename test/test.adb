@@ -19,13 +19,13 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-with Morzhol.Strings;
-with Morzhol.VC.RCS;
 with Ada.Text_IO;
 with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Command_Line;
-with Morzhol.VC;
+
+with Morzhol.Strings;
+with Morzhol.VC.RCS;
 
 procedure Test is
 
