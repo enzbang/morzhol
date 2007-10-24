@@ -33,34 +33,28 @@ package body Morzhol.VC.RCS is
    use Ada;
    use GNAT;
 
-   use Morzhol.OS;
    use Morzhol.Strings;
 
-   Cmd           : constant String := "cmd.exe";
-   Diff_Rev_Opt  : constant String := "-r";
-   Ci_Author_Opt : constant String := "-w";
+   Diff_Rev_Opt      : constant String := "-r";
+   Ci_Author_Opt     : constant String := "-w";
 
-   Cmd_Option : aliased String := "/c";
-   Sh_Option  : aliased String := "sh";
+   Ci_Command        : aliased constant String := "ci";
+   Ci_Opt            : aliased String := "-u";
 
-   Ci_Command : aliased String := "ci";
-   Ci_Opt     : aliased String := "-u";
+   Co_Command        : aliased constant String := "co";
+   Co_Opt            : aliased String := "-l";
 
-   Co_Command : aliased String := "co";
-   Co_Opt     : aliased String := "-l";
-
-   Log_Command       : aliased String := "rlog";
+   Log_Command       : aliased constant String := "rlog";
    Log_Total_Rev_Opt : aliased String := "-h";
 
-   Diff_Command : aliased String := "rcsdiff";
+   Diff_Command      : aliased constant String := "rcsdiff";
 
    function Commit
      (Engine           : in RCS;
       Filename         : in String;
       Message          : in String;
       Author           : in String;
-      Initial_Revision : in Boolean)
-     return Boolean;
+      Initial_Revision : in Boolean) return Boolean;
    --  Commit or Add if Initial_Revision is True
 
    -----------
@@ -70,22 +64,22 @@ package body Morzhol.VC.RCS is
    function Add
      (Engine   : in RCS;
       Filename : in String;
-      Author   : in String := "")
-      return Boolean
+      Author   : in String := "") return Boolean
    is
-      Local_RCS_Dir : constant String
-        := Directories.Containing_Directory (Filename)
-        & Directory_Separator & "RCS";
+      Local_RCS_Dir : constant String :=
+                        Directories.Containing_Directory (Filename)
+                        & OS.Directory_Separator & "RCS";
    begin
       if not Directories.Exists (Local_RCS_Dir) then
          Directories.Create_Directory (Local_RCS_Dir);
       end if;
 
-      return Commit (Engine           => Engine,
-                     Filename         => Filename,
-                     Message          => "File : " & Filename,
-                     Author           => Author,
-                     Initial_Revision => True);
+      return Commit
+        (Engine           => Engine,
+         Filename         => Filename,
+         Message          => "File : " & Filename,
+         Author           => Author,
+         Initial_Revision => True);
    end Add;
 
    --------------
@@ -96,15 +90,14 @@ package body Morzhol.VC.RCS is
      (Engine   : in RCS;
       Filename : in String;
       Message  : in String;
-      Author   : in String := "")
-     return Boolean
-   is
+      Author   : in String := "") return Boolean is
    begin
-      return Commit (Engine           => Engine,
-                     Filename         => Filename,
-                     Message          => Message,
-                     Author           => Author,
-                     Initial_Revision => False);
+      return Commit
+        (Engine           => Engine,
+         Filename         => Filename,
+         Message          => Message,
+         Author           => Author,
+         Initial_Revision => False);
    end Commit;
 
    --------------
@@ -116,18 +109,16 @@ package body Morzhol.VC.RCS is
       Filename         : in String;
       Message          : in String;
       Author           : in String;
-      Initial_Revision : in Boolean)
-     return Boolean
+      Initial_Revision : in Boolean) return Boolean
    is
-
       pragma Unreferenced (Engine);
 
       use type Expect.Expect_Match;
 
-      Pd      : Expect.Process_Descriptor;
-      Result  : Expect.Expect_Match;
+      Pd          : Expect.Process_Descriptor;
+      Result      : Expect.Expect_Match;
 
-      RCS_File    : OS_Lib.String_Access := new String'(Filename);
+      RCS_File    : aliased String := Filename;
       RCS_Message : OS_Lib.String_Access;
       RCS_Author  : OS_Lib.String_Access;
 
@@ -142,30 +133,17 @@ package body Morzhol.VC.RCS is
          RCS_Author := new String'(Ci_Author_Opt & Author);
       end if;
 
-      if Is_Windows then
-         Expect.Non_Blocking_Spawn
-           (Descriptor => Pd,
-            Command    => Cmd,
-            Args       => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                                2 => Sh_Option'Access,
-                                                3 => Ci_Command'Access,
-                                                4 => Ci_Opt'Access,
-                                                5 => RCS_Author,
-                                                6 => RCS_Message,
-                                                7 => RCS_File),
-            Err_To_Out => True);
-      else
-         Expect.Non_Blocking_Spawn
-           (Descriptor => Pd,
-            Command    => Ci_Command,
-            Args       => OS_Lib.Argument_List'(1 => Ci_Opt'Access,
-                                                2 => RCS_Author,
-                                                3 => RCS_Message,
-                                                4 => RCS_File),
-            Err_To_Out => True);
-      end if;
+      Expect.Non_Blocking_Spawn
+        (Descriptor => Pd,
+         Command    => Ci_Command,
+         Args       =>
+           OS_Lib.Argument_List'
+           (1 => Ci_Opt'Access,
+            2 => RCS_Author,
+            3 => RCS_Message,
+            4 => RCS_File'Unchecked_Access),
+         Err_To_Out => True);
 
-      OS_Lib.Free (RCS_File);
       OS_Lib.Free (RCS_Author);
       OS_Lib.Free (RCS_Message);
 
@@ -176,7 +154,6 @@ package body Morzhol.VC.RCS is
 
    exception
       when Expect.Invalid_Process | Expect.Process_Died =>
-         OS_Lib.Free (RCS_File);
          OS_Lib.Free (RCS_Author);
          OS_Lib.Free (RCS_Message);
          return False;
@@ -195,50 +172,26 @@ package body Morzhol.VC.RCS is
    is
       pragma Unreferenced (Engine);
 
-      RCS_File : OS_Lib.String_Access := new String'(Filename);
-      Rev1     : OS_Lib.String_Access :=
-                   new String'(Diff_Rev_Opt & From_Version);
-      Rev2     : OS_Lib.String_Access :=
-                   new String'(Diff_Rev_Opt & To_Version);
+      RCS_File : aliased String := Filename;
+      Rev1     : aliased String := Diff_Rev_Opt & From_Version;
+      Rev2     : aliased String := Diff_Rev_Opt & To_Version;
 
       Status : aliased Integer;
       Result : Unbounded_String;
    begin
-      if Is_Windows then
-         Result := +Expect.Get_Command_Output
-           (Command    => Cmd,
-            Arguments  => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                                2 => Sh_Option'Access,
-                                                3 => Diff_Command'Access,
-                                                4 => Rev1,
-                                                5 => Rev2,
-                                                6 => RCS_File),
-            Input      => "",
-            Status     => Status'Access,
-            Err_To_Out => True);
-      else
-         Result := +Expect.Get_Command_Output
-           (Command    => Diff_Command,
-            Arguments  => OS_Lib.Argument_List'(1 => Rev1,
-                                                2 => Rev2,
-                                                3 => RCS_File),
-            Input      => "",
-            Status     => Status'Access,
-            Err_To_Out => True);
-
-      end if;
-
-      OS_Lib.Free (RCS_File);
-      OS_Lib.Free (Rev1);
-      OS_Lib.Free (Rev2);
+      Result := +Expect.Get_Command_Output
+        (Command    => Diff_Command,
+         Arguments  =>
+           OS_Lib.Argument_List'(1 => Rev1'Unchecked_Access,
+                                 2 => Rev2'Unchecked_Access,
+                                 3 => RCS_File'Unchecked_Access),
+         Input      => "",
+         Status     => Status'Access,
+         Err_To_Out => True);
 
       return -Result;
    exception
       when Expect.Invalid_Process | Expect.Process_Died =>
-         OS_Lib.Free (RCS_File);
-         OS_Lib.Free (Rev1);
-         OS_Lib.Free (Rev2);
-
          return -Result;
    end Diff;
 
@@ -249,17 +202,20 @@ package body Morzhol.VC.RCS is
    function Get_Log
      (Engine   : in RCS;
       Filename : in String;
-      Limit    : in Natural := 0)
-     return Log
+      Limit    : in Natural := 0) return Log
    is
       pragma Unreferenced (Engine, Limit);
       use type Expect.Expect_Match;
 
-      RCS_File : OS_Lib.String_Access := new String'(Filename);
-
       function Get_Revision_Number return Natural;
       --  Return the number of revision for that file
       --  or 0 if an error has occured
+
+      RCS_File : aliased String := Filename;
+
+      -------------------------
+      -- Get_Revision_Number --
+      -------------------------
 
       function Get_Revision_Number return Natural is
 
@@ -267,26 +223,13 @@ package body Morzhol.VC.RCS is
          Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
          Result  : Expect.Expect_Match;
       begin
-         if Is_Windows then
-            Expect.Non_Blocking_Spawn
-              (Descriptor => Pd,
-               Command    => Cmd,
-               Args       => OS_Lib.Argument_List'
-                 (1 => Cmd_Option'Access,
-                  2 => Sh_Option'Access,
-                  3 => Log_Command'Access,
-                  4 => Log_Total_Rev_Opt'Access,
-                  5 => RCS_File),
-               Err_To_Out => True);
-         else
-            Expect.Non_Blocking_Spawn
-              (Descriptor => Pd,
-               Command    => Log_Command,
-               Args       => OS_Lib.Argument_List'
-                 (1 => Log_Total_Rev_Opt'Access,
-                  2 => RCS_File),
-               Err_To_Out => True);
-         end if;
+         Expect.Non_Blocking_Spawn
+           (Descriptor => Pd,
+            Command    => Log_Command,
+            Args       => OS_Lib.Argument_List'
+              (1 => Log_Total_Rev_Opt'Access,
+               2 => RCS_File'Unchecked_Access),
+            Err_To_Out => True);
 
          Expect.Expect
            (Descriptor => Pd,
@@ -304,31 +247,21 @@ package body Morzhol.VC.RCS is
       end Get_Revision_Number;
 
       Revision_Number : constant Natural := Get_Revision_Number;
-      Current         : Positive         := 1;
-      File_Log        : Log (1 .. Revision_Number);
-      Pd              : Expect.Process_Descriptor;
-   begin
 
+      Pd       : Expect.Process_Descriptor;
+      File_Log : Log (1 .. Revision_Number);
+      Current  : Positive := 1;
+
+   begin
       if Revision_Number = 0 then
          return File_Log;
       end if;
 
-      if Is_Windows then
-         Expect.Non_Blocking_Spawn
-           (Descriptor => Pd,
-            Command    => Cmd,
-            Args       => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                                2 => Sh_Option'Access,
-                                                3 => Log_Command'Access,
-                                                4 => RCS_File),
-            Err_To_Out => True);
-      else
-         Expect.Non_Blocking_Spawn
-           (Descriptor => Pd,
-            Command    => Log_Command,
-            Args       => OS_Lib.Argument_List'(1 => RCS_File),
-            Err_To_Out => True);
-      end if;
+      Expect.Non_Blocking_Spawn
+        (Descriptor => Pd,
+         Command    => Log_Command,
+         Args       => OS_Lib.Argument_List'(1 => RCS_File'Unchecked_Access),
+         Err_To_Out => True);
 
       loop
          Read_Out : declare
@@ -361,13 +294,10 @@ package body Morzhol.VC.RCS is
          end Read_Out;
       end loop;
 
-      OS_Lib.Free (RCS_File);
-
       return File_Log;
 
    exception
       when Expect.Invalid_Process | Expect.Process_Died =>
-         OS_Lib.Free (RCS_File);
          return File_Log;
    end Get_Log;
 
@@ -376,44 +306,31 @@ package body Morzhol.VC.RCS is
    ------------
 
    function Lock
-     (Engine : in RCS; Filename : in String) return Boolean is
+     (Engine : in RCS; Filename : in String) return Boolean
+   is
       pragma Unreferenced (Engine);
       use type Expect.Expect_Match;
 
-      Local_RCS_Dir : constant String
-        := Directories.Containing_Directory (Filename)
-        & Directory_Separator & "RCS";
+      Local_RCS_Dir : constant String :=
+                        Directories.Containing_Directory (Filename)
+                        & OS.Directory_Separator & "RCS";
 
+      RCS_File  : aliased String := Filename;
       Pd        : Expect.Process_Descriptor;
       Result    : Expect.Expect_Match;
       Matched   : Regpat.Match_Array (Regpat.Match_Count range 0 .. 1);
-      RCS_File  : OS_Lib.String_Access := new String'(Filename);
 
    begin
       if not Directories.Exists (Local_RCS_Dir) then
          Directories.Create_Directory (Local_RCS_Dir);
       end if;
 
-      if Is_Windows then
-         Expect.Non_Blocking_Spawn
-           (Descriptor => Pd,
-            Command    => Cmd,
-            Args       => OS_Lib.Argument_List'(1 => Cmd_Option'Access,
-                                                2 => Sh_Option'Access,
-                                                3 => Co_Command'Access,
-                                                4 => Co_Opt'Access,
-                                                5 => RCS_File),
-            Err_To_Out => True);
-      else
-         Expect.Non_Blocking_Spawn
-           (Descriptor => Pd,
-            Command    => Co_Command,
-            Args       => OS_Lib.Argument_List'(1 => Co_Opt'Access,
-                                                2 => RCS_File),
-            Err_To_Out => True);
-      end if;
-
-      OS_Lib.Free (RCS_File);
+      Expect.Non_Blocking_Spawn
+        (Descriptor => Pd,
+         Command    => Co_Command,
+         Args       => OS_Lib.Argument_List'(1 => Co_Opt'Access,
+                                             2 => RCS_File'Unchecked_Access),
+         Err_To_Out => True);
 
       Expect.Expect (Pd, Result, "locked.*\n.*done.*", Matched);
 
@@ -432,11 +349,9 @@ package body Morzhol.VC.RCS is
    --  Remove  --
    --------------
 
-   function Remove (Engine : in RCS; Filename : in String) return Boolean
-   is
+   function Remove (Engine : in RCS; Filename : in String) return Boolean is
       pragma Unreferenced (Engine);
    begin
-
       --  Nothing special to do here as RCS support only files
 
       if Directories.Exists (Filename) then
@@ -446,4 +361,5 @@ package body Morzhol.VC.RCS is
 
       return False;
    end Remove;
+
 end Morzhol.VC.RCS;

@@ -31,15 +31,13 @@ package Morzhol.VC.RCS is
      (Engine   : in RCS;
       Filename : in String;
       Message  : in String;
-      Author   : in String := "")
-     return Boolean;
+      Author   : in String := "") return Boolean;
    --  Checking in the changes
 
    function Add
      (Engine   : in RCS;
       Filename : in String;
-      Author   : in String := "")
-      return Boolean;
+      Author   : in String := "") return Boolean;
    --  Do the initial check-in
 
    function Remove (Engine : in RCS; Filename : in String) return Boolean;
@@ -48,15 +46,13 @@ package Morzhol.VC.RCS is
    function Get_Log
      (Engine   : in RCS;
       Filename : in String;
-      Limit    : in Natural := 0)
-     return Log;
+      Limit    : in Natural := 0) return Log;
 
    function Diff
      (Engine       : in RCS;
       Filename     : in String;
       From_Version : in String;
-      To_Version   : in String)
-     return String;
+      To_Version   : in String) return String;
    --  Returns the diff
 
 end Morzhol.VC.RCS;

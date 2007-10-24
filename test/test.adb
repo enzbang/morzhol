@@ -19,10 +19,11 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-with Ada.Text_IO;
+with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Exceptions;
-with Ada.Command_Line;
+with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 with Morzhol.Strings;
 with Morzhol.VC.RCS;
@@ -32,15 +33,14 @@ procedure Test is
    use Ada;
    use Ada.Text_IO;
    use Ada.Command_Line;
+   use Ada.Strings.Unbounded;
 
    use Morzhol.Strings;
    use Morzhol.VC.RCS;
 
    VCS_Engine : RCS;
+
 begin
-
-   Set_Exit_Status (Failure);
-
    if HTML_To_Text
      ("<a href='http://morzhol.google.code.com'>Morzhol</a>") /= "Morzhol"
      or else HTML_To_Text ("A <em>small</em> test") /= "A small test"
@@ -91,24 +91,36 @@ begin
 
       Put (File_To_Change, "modification");
       Close (File_To_Change);
-
    end Change_Test_File;
 
-   if not Commit (Engine   => VCS_Engine,
-                  Filename => "test/RCS_Test",
-                  Message  => "first commit by test.adb",
-                  Author   => "author") then
-      Put_Line ("Commit failure");
+   if not Commit
+     (Engine   => VCS_Engine,
+      Filename => "test/RCS_Test",
+      Message  => "first commit by test.adb",
+      Author   => "author")
+   then
+      Ada.Text_IO.Put_Line ("Commit failure");
       return;
    end if;
 
    declare
       File_Log : constant Morzhol.VC.Log :=
                    Get_Log (VCS_Engine, "test/RCS_Test");
+      Diff_Txt : Unbounded_String :=
+                   +Diff (VCS_Engine, "test/RCS_Test",
+                         -File_Log (2).Revision, -File_Log (1).Revision);
    begin
+      --  Remove CR for Windows compatibility
+      loop
+         declare
+            I : constant Natural := Index (Diff_Txt, String'(1 => ASCII.CR));
+         begin
+            exit when I = 0;
+            Delete (Diff_Txt, I, I);
+         end;
+      end loop;
 
-      if Diff (VCS_Engine, "test/RCS_Test",
-         -File_Log (2).Revision, -File_Log (1).Revision) /=
+      if -Diff_Txt /=
        "==================================================================="
         & ASCII.LF & "RCS file: test/RCS/RCS_Test,v"
         & ASCII.LF & "retrieving revision 1.1"
@@ -128,7 +140,9 @@ begin
 
    Put_Line ("OK. All tests passed !");
    Set_Exit_Status (Success);
+
 exception
    when E : others =>
       Put_Line (Exceptions.Exception_Information (E));
+      Set_Exit_Status (Failure);
 end Test;
