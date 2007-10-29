@@ -25,10 +25,9 @@ GNAT=gnat
 export PATH:=$(shell pwd)/lib:$(PATH)
 
 all:
-	$(GNAT) make -Pmorzhol
+	$(GNAT) make -p -Pmorzhol
 
 setup:
-	mkdir -p obj lib
 
 check:
 	$(GNAT) check -dd -Pmorzhol -rules -from=morzhol.check
