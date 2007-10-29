@@ -63,6 +63,10 @@ project Morzhol is
    Release_Options :=
      ("-O2", "-gnatn");
 
+   ----------------
+   --  Compiler  --
+   ----------------
+
    package Compiler is
       case Build is
          when "Debug" | "Profile" =>
@@ -80,7 +84,6 @@ project Morzhol is
    package Ide is
       for Vcs_Kind use "SVN";
    end Ide;
-
 
    ------------
    -- Binder --
