@@ -20,12 +20,17 @@
 ##############################################################################
 
 GNAT=gnat
+MKDIR=mkdir
+CP=cp
+MODE=Release
 
 # Required for Windows to find the shared library
+ifeq ($(OS),Windows_NT)
 export PATH:=$(shell pwd)/lib:$(PATH)
+endif
 
 all:
-	$(GNAT) make -p -Pmorzhol
+	$(GNAT) make -p -XPRJ_BUILD=$(MODE) -Pmorzhol
 
 setup:
 
@@ -37,5 +42,23 @@ regtests:
 	./test/test
 
 clean:
-	-$(GNAT) clean -q -Pmorzhol
-	-$(GNAT) clean -q -Ptest/test
+	-$(GNAT) clean -XPRJ_BUILD=$(MODE) -q -Pmorzhol
+	-$(GNAT) clean -XPRJ_BUILD=$(MODE) -q -Ptest/test
+
+I_MORZ     = $(INSTALL)/include/morzhol
+I_LIB_MORZ = $(INSTALL)/lib/morzhol
+I_GPR	   = $(INSTALL)/lib/gnat
+BDIR       = ".build/$(shell echo $(MODE) | tr [[:upper:]] [[:lower:]])"
+
+install:
+ifeq ("$(INSTALL)", "..")
+	$(error "Wrong install path : INSTALL='$(INSTALL)'")
+else
+ifeq ("$(INSTALL)", "")
+	$(error "Wrong install path : empty INSTALL var")
+endif
+endif
+	$(MKDIR) -p $(I_MORZ)
+	$(CP) src/*.ad[sb] $(I_MORZ)
+	$(CP) $(BDIR)/lib/* $(I_LIB_MORZ)
+	$(CP) install.gpr $(I_GPR)/morzhol.gpr
