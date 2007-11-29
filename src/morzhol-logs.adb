@@ -140,6 +140,4 @@ package body Morzhol.Logs is
          Semaphore.Release;
    end Write;
 
-begin -- V2P.Logs
-   Text_IO.Create (Log, Mode => Text_IO.Append_File, Name => "v2p.log");
 end Morzhol.Logs;
