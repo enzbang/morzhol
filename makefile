@@ -23,6 +23,7 @@ GNAT=gnat
 MKDIR=mkdir
 CP=cp
 MODE=Release
+
 GNAT_ROOT=$(dir $(shell which gnatls))..
 INSTALL = $(GNAT_ROOT)
 
@@ -62,7 +63,7 @@ install: INSTALL = $(shell cat mk.install)
 endif
 
 # Set BDIR to .build/#lowercase_mode#
-install: BDIR = ".build/$(shell echo $(MODE) | tr [[:upper:]] [[:lower:]])"
+install: BDIR = .build/$(shell echo $(MODE) | tr [[:upper:]] [[:lower:]])
 
 install:
 ifeq ("$(INSTALL)", "")
@@ -72,3 +73,6 @@ endif
 	$(CP) src/*.ad[sb] $(INSTALL)/include/morzhol
 	$(CP) $(BDIR)/lib/* $(INSTALL)/lib/morzhol
 	$(CP) install.gpr $(INSTALL)/lib/gnat/morzhol.gpr
+ifeq ($(OS), Windows_NT)
+	$(CP) $(BDIR)/lib/*$(SOEXT) $(BDIR)/lib
+endif
