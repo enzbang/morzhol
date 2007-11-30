@@ -8,6 +8,7 @@
 *.orig
 *.patch
 **b~*
+mk.install
 test/_*
 test/RCS*
 test/test
