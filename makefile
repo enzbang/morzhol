@@ -32,6 +32,10 @@ export PATH:=$(shell pwd)/lib:$(PATH)
 endif
 
 all:
+ifneq ($(INSTALL), "")
+# Write INSTALL target into mk.install (see install target)
+	$(shell echo $(INSTALL) > mk.install)
+endif
 	$(GNAT) make -p -XPRJ_BUILD=$(MODE) -Pmorzhol
 
 setup:
@@ -47,20 +51,24 @@ clean:
 	-$(GNAT) clean -XPRJ_BUILD=$(MODE) -q -Pmorzhol
 	-$(GNAT) clean -XPRJ_BUILD=$(MODE) -q -Ptest/test
 
-I_MORZ     = $(INSTALL)/include/morzhol
-I_LIB_MORZ = $(INSTALL)/lib/morzhol
-I_GPR	   = $(INSTALL)/lib/gnat
-BDIR       = ".build/$(shell echo $(MODE) | tr [[:upper:]] [[:lower:]])"
+
+
+ifeq ("$(INSTALL)", "..")
+# IF GNAT_ROOT is empty and INSTALL var is not set by the user,
+# the INSTALL var is equal to ".."
+# In this case, read INSTALL from mk.install. This file is created
+# before building
+install: INSTALL = $(shell cat mk.install)
+endif
+
+# Set BDIR to .build/#lowercase_mode#
+install: BDIR = ".build/$(shell echo $(MODE) | tr [[:upper:]] [[:lower:]])"
 
 install:
-ifeq ("$(INSTALL)", "..")
-	$(error "Wrong install path : INSTALL='$(INSTALL)'")
-else
 ifeq ("$(INSTALL)", "")
 	$(error "Wrong install path : empty INSTALL var")
 endif
-endif
-	$(MKDIR) -p $(I_MORZ)
-	$(CP) src/*.ad[sb] $(I_MORZ)
-	$(CP) $(BDIR)/lib/* $(I_LIB_MORZ)
-	$(CP) install.gpr $(I_GPR)/morzhol.gpr
+	$(MKDIR) -p $(INSTALL)/include/morzhol
+	$(CP) src/*.ad[sb] $(INSTALL)/include/morzhol
+	$(CP) $(BDIR)/lib/* $(INSTALL)/lib/morzhol
+	$(CP) install.gpr $(INSTALL)/lib/gnat/morzhol.gpr
