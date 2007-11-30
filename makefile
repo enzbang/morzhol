@@ -23,6 +23,8 @@ GNAT=gnat
 MKDIR=mkdir
 CP=cp
 MODE=Release
+GNAT_ROOT=$(dir $(shell which gnatls))..
+INSTALL = $(GNAT_ROOT)
 
 # Required for Windows to find the shared library
 ifeq ($(OS),Windows_NT)
