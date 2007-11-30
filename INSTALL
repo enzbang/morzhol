@@ -1,0 +1,16 @@
+
+This is a module containing some simple helper/support routines used in
+other applications.
+
+Dependencies
+------------
+
+   NONE
+
+Building
+--------
+
+Building Morzhol
+
+   $ make
+   $ sudo make install
