@@ -62,10 +62,11 @@ ifeq ("$(INSTALL)", "..")
 install: INSTALL = $(shell cat mk.install)
 endif
 
+force:
+
 # Set BDIR to .build/#lowercase_mode#
 install: BDIR = .build/$(shell echo $(MODE) | tr [[:upper:]] [[:lower:]])
-
-install:
+install: force
 ifeq ("$(INSTALL)", "")
 	$(error "Wrong install path : empty INSTALL var")
 endif
@@ -74,5 +75,5 @@ endif
 	$(CP) $(BDIR)/lib/* $(INSTALL)/lib/morzhol
 	$(CP) install.gpr $(INSTALL)/lib/gnat/morzhol.gpr
 ifeq ($(OS), Windows_NT)
-	$(CP) $(BDIR)/lib/*$(SOEXT) $(BDIR)/lib
+	$(CP) $(BDIR)/lib/*$(SOEXT) $(INSTALL)/lib
 endif
