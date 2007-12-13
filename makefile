@@ -32,10 +32,12 @@ ifeq ($(OS),Windows_NT)
 export PATH:=$(shell pwd)/lib:$(PATH)
 endif
 
-all:
+all: build
+
+build:
 ifneq ($(INSTALL), "")
 # Write INSTALL target into mk.install (see install target)
-	$(shell echo $(INSTALL) > mk.install)
+	$(shell echo INSTALL = $(INSTALL) > mk.install)
 endif
 	$(GNAT) make -p -XPRJ_BUILD=$(MODE) -Pmorzhol
 
@@ -53,14 +55,7 @@ clean:
 	-$(GNAT) clean -XPRJ_BUILD=$(MODE) -q -Ptest/test
 
 
-
-ifeq ("$(INSTALL)", "..")
-# IF GNAT_ROOT is empty and INSTALL var is not set by the user,
-# the INSTALL var is equal to ".."
-# In this case, read INSTALL from mk.install. This file is created
-# before building
-install: INSTALL = $(shell cat mk.install)
-endif
+-include mk.install
 
 force:
 
