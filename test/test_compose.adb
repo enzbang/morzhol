@@ -53,6 +53,7 @@ procedure Test_Compose is
 begin
    Test ("/dir/subdir", "azerty", Expected => "/dir/subdir/azerty");
    Test ("/dir/subdir", "/azerty", Expected => "/azerty");
+   Test ("/dir/subdir", "./azerty", Expected => "/dir/subdir/azerty");
 
    if OS.Is_Windows then
       Test ("/dir/subdir", "\azerty", Expected => "\azerty");

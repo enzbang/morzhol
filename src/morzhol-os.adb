@@ -37,7 +37,17 @@ package body Morzhol.OS is
                  and then Characters.Handling.Is_Letter (Path (Path'First))
                  and then Path (Path'First + 1 .. Path'First + 2) = ":\")
       then
+         --  Absolute Path
          return Path;
+
+      elsif Path'Length > 2
+            and then
+              (Path (Path'First .. Path'First + 1) = "./"
+               or else Path (Path'First .. Path'First + 1) = ".\")
+      then
+         return Directories.Compose
+           (Containing_Directory, Path (Path'First + 2 .. Path'Last));
+
       else
          return Directories.Compose (Containing_Directory, Path);
       end if;
