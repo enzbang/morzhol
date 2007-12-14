@@ -54,6 +54,7 @@ begin
    Test ("/dir/subdir", "azerty", Expected => "/dir/subdir/azerty");
    Test ("/dir/subdir", "/azerty", Expected => "/azerty");
    Test ("/dir/subdir", "./azerty", Expected => "/dir/subdir/azerty");
+   Test ("/dir/subdir", "db/database", Expected => "/dir/subdir/db/database");
 
    if OS.Is_Windows then
       Test ("/dir/subdir", "\azerty", Expected => "\azerty");

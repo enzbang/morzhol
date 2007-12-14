@@ -20,7 +20,6 @@
 ------------------------------------------------------------------------------
 
 with Ada.Characters.Handling;
-with Ada.Directories;
 
 package body Morzhol.OS is
 
@@ -29,6 +28,27 @@ package body Morzhol.OS is
    -------------
 
    function Compose (Containing_Directory, Path : in String) return String is
+
+      function CD_Sep return String;
+      --  Returns the Containing_Directory with an ending directory separator
+
+      ------------
+      -- CD_Sep --
+      ------------
+
+      function CD_Sep return String is
+         CD : String renames Containing_Directory;
+      begin
+         if CD'Length > 1
+           and then
+           (CD (CD'Last) = '/' or else CD (CD'Last) = Directory_Separator)
+         then
+            return CD;
+         else
+            return CD & Directory_Separator;
+         end if;
+      end CD_Sep;
+
    begin
       if (Path'Length > 1
           and then (Path (Path'First) = '/'
@@ -45,11 +65,10 @@ package body Morzhol.OS is
               (Path (Path'First .. Path'First + 1) = "./"
                or else Path (Path'First .. Path'First + 1) = ".\")
       then
-         return Directories.Compose
-           (Containing_Directory, Path (Path'First + 2 .. Path'Last));
+         return CD_Sep & Path (Path'First + 2 .. Path'Last);
 
       else
-         return Directories.Compose (Containing_Directory, Path);
+         return CD_Sep & Path;
       end if;
    end Compose;
 
