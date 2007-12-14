@@ -47,7 +47,7 @@ check:
 	$(GNAT) check -dd -Pmorzhol -rules -from=morzhol.check
 
 regtests:
-	$(GNAT) make -Ptest/test
+	$(GNAT) make -p -Ptest/test
 	./test/test
 
 clean:
