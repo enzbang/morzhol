@@ -26,7 +26,7 @@ project Test is
    for Source_Dirs use (".");
    for Object_Dir use ".";
    for Exec_Dir use ".";
-   for Main use ("test");
+   for Main use ("test", "test_compose");
 
    package Compiler is
       for Default_Switches ("Ada") use ("-gnat05");

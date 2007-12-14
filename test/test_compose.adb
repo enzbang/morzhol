@@ -19,30 +19,52 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-with Ada.Environment_Variables;
+with Ada.Command_Line;
+with Ada.Exceptions;
+with Ada.Text_IO;
 
-package Morzhol.OS is
+with Morzhol.OS;
+
+procedure Test_Compose is
 
    use Ada;
+   use Ada.Command_Line;
+   use Ada.Text_IO;
+   use Morzhol;
 
-   Is_Windows          : constant Boolean :=
-                           Environment_Variables.Exists ("OS") and then
-                           Environment_Variables.Value ("OS") = "Windows_NT";
+   Test_Error : exception;
 
-   Directory_Separator : constant Character;
+   procedure Test (Dir, Path, Expected : in String);
+   --  Check Compose (Dir, Path), output should be Expected
 
-   function Compose (Containing_Directory, Path : in String) return String;
-   --  Returns Containing_Directory & Directory_Separator & Path if PATH is
-   --  relative, otherwise it returns Path.
+   ----------
+   -- Test --
+   ----------
 
-private
+   procedure Test (Dir, Path, Expected : in String) is
+   begin
+      if OS.Compose (Dir, Path) /= Expected then
+         raise Test_Error with
+           "Compose ERROR: " & OS.Compose (Dir, Path)
+           & ", expected " & Expected;
+      end if;
+   end Test;
 
-   subtype Windows_Host is Boolean;
+begin
+   Test ("/dir/subdir", "azerty", Expected => "/dir/subdir/azerty");
+   Test ("/dir/subdir", "/azerty", Expected => "/azerty");
 
-   type DS_Array is array (Windows_Host) of Character;
+   if OS.Is_Windows then
+      Test ("/dir/subdir", "\azerty", Expected => "\azerty");
+   end if;
 
-   DS : DS_Array := DS_Array'(True => '\', False => '/');
+   Test ("/dir/subdir", "c:\dir\azerty", Expected => "c:\dir\azerty");
 
-   Directory_Separator : constant Character := DS (Is_Windows);
+   Put_Line ("OK. All tests passed !");
+   Set_Exit_Status (Success);
 
-end Morzhol.OS;
+exception
+   when E : others =>
+      Put_Line (Exceptions.Exception_Information (E));
+      Set_Exit_Status (Failure);
+end Test_Compose;

@@ -19,30 +19,28 @@
 --  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.       --
 ------------------------------------------------------------------------------
 
-with Ada.Environment_Variables;
+with Ada.Characters.Handling;
+with Ada.Directories;
 
-package Morzhol.OS is
+package body Morzhol.OS is
 
-   use Ada;
+   -------------
+   -- Compose --
+   -------------
 
-   Is_Windows          : constant Boolean :=
-                           Environment_Variables.Exists ("OS") and then
-                           Environment_Variables.Value ("OS") = "Windows_NT";
-
-   Directory_Separator : constant Character;
-
-   function Compose (Containing_Directory, Path : in String) return String;
-   --  Returns Containing_Directory & Directory_Separator & Path if PATH is
-   --  relative, otherwise it returns Path.
-
-private
-
-   subtype Windows_Host is Boolean;
-
-   type DS_Array is array (Windows_Host) of Character;
-
-   DS : DS_Array := DS_Array'(True => '\', False => '/');
-
-   Directory_Separator : constant Character := DS (Is_Windows);
+   function Compose (Containing_Directory, Path : in String) return String is
+   begin
+      if (Path'Length > 1
+          and then (Path (Path'First) = '/'
+                    or else Path (Path'First) = Directory_Separator))
+        or else (Path'Length > 3
+                 and then Characters.Handling.Is_Letter (Path (Path'First))
+                 and then Path (Path'First + 1 .. Path'First + 2) = ":\")
+      then
+         return Path;
+      else
+         return Directories.Compose (Containing_Directory, Path);
+      end if;
+   end Compose;
 
 end Morzhol.OS;

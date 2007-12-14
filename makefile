@@ -49,6 +49,7 @@ check:
 regtests:
 	$(GNAT) make -p -Ptest/test
 	./test/test
+	./test/test_compose
 
 clean:
 	-$(GNAT) clean -XPRJ_BUILD=$(MODE) -q -Pmorzhol
