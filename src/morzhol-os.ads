@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                Morzhol                                   --
 --                                                                          --
---                           Copyright (C) 2007                             --
+--                           Copyright (C) 2008                             --
 --                      Pascal Obry - Olivier Ramonat                       --
 --                                                                          --
 --  This library is free software; you can redistribute it and/or modify    --
@@ -33,7 +33,13 @@ package Morzhol.OS is
 
    function Compose (Containing_Directory, Path : in String) return String;
    --  Returns Containing_Directory & Directory_Separator & Path if PATH is
-   --  relative, otherwise it returns Path.
+   --  relative, otherwise it returns Path. Removes any trailing directory
+   --  separator.
+
+   function Is_Directory_Separator (C : in Character) return Boolean;
+   pragma Inline (Is_Directory_Separator);
+   --  Returns true is C is a directory separator. Note that on Windows
+   --  both / and \ are supported.
 
 private
 

@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                Morzhol                                   --
 --                                                                          --
---                           Copyright (C) 2007                             --
+--                           Copyright (C) 2008                             --
 --                      Pascal Obry - Olivier Ramonat                       --
 --                                                                          --
 --  This library is free software; you can redistribute it and/or modify    --
@@ -49,27 +49,43 @@ package body Morzhol.OS is
          end if;
       end CD_Sep;
 
+      Last : Natural := Path'Last;
+
    begin
+      --  Removes any trailing directory separator
+
+      while Last /= 0 and then Is_Directory_Separator (Path (Last)) loop
+         Last := Last - 1;
+      end loop;
+
       if (Path'Length > 1
-          and then (Path (Path'First) = '/'
-                    or else Path (Path'First) = Directory_Separator))
+          and then Is_Directory_Separator (Path (Path'First)))
         or else (Path'Length > 3
                  and then Characters.Handling.Is_Letter (Path (Path'First))
                  and then Path (Path'First + 1 .. Path'First + 2) = ":\")
       then
          --  Absolute Path
-         return Path;
+         return Path (Path'First .. Last);
 
       elsif Path'Length > 2
             and then
               (Path (Path'First .. Path'First + 1) = "./"
                or else Path (Path'First .. Path'First + 1) = ".\")
       then
-         return CD_Sep & Path (Path'First + 2 .. Path'Last);
+         return CD_Sep & Path (Path'First + 2 .. Last);
 
       else
-         return CD_Sep & Path;
+         return CD_Sep & Path (Path'First .. Last);
       end if;
    end Compose;
+
+   ----------------------------
+   -- Is_Directory_Separator --
+   ----------------------------
+
+   function Is_Directory_Separator (C : in Character) return Boolean is
+   begin
+      return C = '/' or else C = Directory_Separator;
+   end Is_Directory_Separator;
 
 end Morzhol.OS;
