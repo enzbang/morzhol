@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                Morzhol                                   --
 --                                                                          --
---                           Copyright (C) 2007                             --
+--                         Copyright (C) 2007-2008                          --
 --                      Pascal Obry - Olivier Ramonat                       --
 --                                                                          --
 --  This library is free software; you can redistribute it and/or modify    --
@@ -36,6 +36,10 @@ package body Morzhol.Strings is
       procedure Find_End_Tag (Position : in Source_Range);
       --  Find end tag
 
+      ------------------
+      -- Find_End_Tag --
+      ------------------
+
       procedure Find_End_Tag (Position : in Source_Range) is
       begin
          for L in Position + 1 .. HTML_Source'Last loop
@@ -52,6 +56,7 @@ package body Morzhol.Strings is
       for K in HTML_Source'Range loop
          if To_Skip /= 0 then
             To_Skip := To_Skip - 1;
+
          else
             if HTML_Source (K) = '<' then
                Append (Result, HTML_Source (Last .. K - 1));
@@ -71,4 +76,5 @@ package body Morzhol.Strings is
 
       return -Result;
    end HTML_To_Text;
+
 end Morzhol.Strings;
