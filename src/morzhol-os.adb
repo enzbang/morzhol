@@ -54,7 +54,9 @@ package body Morzhol.OS is
    begin
       --  Removes any trailing directory separator
 
-      while Last /= 0 and then Is_Directory_Separator (Path (Last)) loop
+      while Last > Path'First
+        and then Is_Directory_Separator (Path (Last))
+      loop
          Last := Last - 1;
       end loop;
 
