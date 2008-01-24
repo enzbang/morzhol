@@ -67,6 +67,7 @@ ifeq ("$(INSTALL)", "")
 	$(error "Wrong install path : empty INSTALL var")
 endif
 	$(MKDIR) -p $(INSTALL)/include/morzhol
+	$(MKDIR) -p $(INSTALL)/lib/morzhol
 	$(CP) src/*.ad[sb] $(INSTALL)/include/morzhol
 	$(CP) $(BDIR)/lib/* $(INSTALL)/lib/morzhol
 	$(CP) install.gpr $(INSTALL)/lib/gnat/morzhol.gpr
