@@ -115,7 +115,7 @@ package body Morzhol.Iniparser is
          begin
             while not End_Of_File (Config_File) loop
                Get_Line (Config_File, Buffer, Last);
-               if Last /= 0 then
+               if Last /= 0 and then Buffer (Buffer'First) /= '#' then
                   Insert_Parameter (Buffer (1 .. Last));
                end if;
             end loop;
