@@ -21,7 +21,7 @@
 
 GNAT=gnat
 MKDIR=mkdir
-CP=cp
+CP=cp -p
 MODE=Release
 
 GNAT_ROOT=$(dir $(shell which gnatls))..
