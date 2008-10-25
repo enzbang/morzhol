@@ -30,6 +30,11 @@ INSTALL = $(GNAT_ROOT)
 # Required for Windows to find the shared library
 ifeq ($(OS),Windows_NT)
 export PATH:=$(shell pwd)/lib:$(PATH)
+SOEXT=.dll
+EXEEXT=.exe
+else
+SOEXT=.so
+EXEEXT=
 endif
 
 all: build
@@ -72,5 +77,5 @@ endif
 	$(CP) $(BDIR)/lib/* $(INSTALL)/lib/morzhol
 	$(CP) install.gpr $(INSTALL)/lib/gnat/morzhol.gpr
 ifeq ($(OS), Windows_NT)
-	$(CP) $(BDIR)/lib/*$(SOEXT) $(INSTALL)/lib
+	$(CP) $(BDIR)/lib/*$(SOEXT) $(INSTALL)/bin
 endif
