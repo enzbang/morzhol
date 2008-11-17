@@ -74,7 +74,7 @@ begin
    if not Lock (VCS_Engine, "test/RCS_Test") then
       --  Try to add
 
-      if not Add (VCS_Engine, "test/RCS_Test", "initial_author")
+      if not Add (VCS_Engine, "test/RCS_Test", Author => "initial_author")
         or else not Lock (VCS_Engine, "test/RCS_Test")
       then
          Put_Line ("Can not Lock RCS Test !");
@@ -103,7 +103,7 @@ begin
       return;
    end if;
 
-   declare
+   Show_Logs : declare
       File_Log : constant Morzhol.VC.Log :=
                    Get_Log (VCS_Engine, "test/RCS_Test");
       Diff_Txt : Unbounded_String :=
@@ -111,14 +111,14 @@ begin
                          -File_Log (2).Revision, -File_Log (1).Revision);
    begin
       --  Remove CR for Windows compatibility
-      loop
-         declare
+      Search_CR : loop
+         Strip_CR : declare
             I : constant Natural := Index (Diff_Txt, String'(1 => ASCII.CR));
          begin
-            exit when I = 0;
+            exit Search_CR when I = 0;
             Delete (Diff_Txt, I, I);
-         end;
-      end loop;
+         end Strip_CR;
+      end loop Search_CR;
 
       if -Diff_Txt /=
        "==================================================================="
@@ -136,7 +136,7 @@ begin
          Put_Line ("Diff error !");
          return;
       end if;
-   end;
+   end Show_Logs;
 
    Put_Line ("OK. All tests passed !");
    Set_Exit_Status (Success);
