@@ -111,18 +111,4 @@ project Morzhol is
       end case;
    end Binder;
 
-   ------------
-   -- Linker --
-   ------------
-
-   package Linker is
-      case Build is
-         when "Debug" | "Profile" =>
-            for Default_Switches ("Ada") use ("-g");
-
-         when "Release" =>
-            for Default_Switches ("Ada") use ();
-      end case;
-   end Linker;
-
 end Morzhol;
