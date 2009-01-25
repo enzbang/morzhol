@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                Morzhol                                   --
 --                                                                          --
---                           Copyright (C) 2007                             --
+--                         Copyright (C) 2007-2009                          --
 --                      Pascal Obry - Olivier Ramonat                       --
 --                                                                          --
 --  This library is free software; you can redistribute it and/or modify    --
@@ -94,7 +94,7 @@ project Morzhol is
    ---------
 
    package Ide is
-      for Vcs_Kind use "SVN";
+      for VCS_Kind use "Git";
    end Ide;
 
    ------------
