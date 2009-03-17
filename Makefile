@@ -87,7 +87,8 @@ all:: prepare_install $(LIBRARIES)
 
 clean: $(CLN_GPR)
 
-clean_all: $(RM) -rf $(BUILD_DIR)
+clean_all:
+	$(RM) -rf $(BUILD_DIR)
 
 regtests:: bld-test/test
 	./test/test
