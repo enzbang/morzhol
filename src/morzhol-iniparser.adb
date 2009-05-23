@@ -109,7 +109,8 @@ package body Morzhol.Iniparser is
                        Side => Both);
             exception
                when Ada.IO_Exceptions.Data_Error =>
-                  raise Unknown_Parameter;
+                  raise Unknown_Parameter
+                    with "Wrong parameter '" & From & ''';
             end Insert_Parameter;
 
          begin
