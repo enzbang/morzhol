@@ -81,7 +81,7 @@ $(CLN_GPR): cln-% :
 $(CHK_GPR): chk-% :
 	$(GNATCHECK) -P$*
 
-morzhol build: bld-morzhol
+morzhol build: prepare_install bld-morzhol
 
 all:: prepare_install $(LIBRARIES)
 
