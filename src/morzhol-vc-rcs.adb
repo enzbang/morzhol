@@ -263,7 +263,7 @@ package body Morzhol.VC.RCS is
          Args       => OS_Lib.Argument_List'(1 => RCS_File'Unchecked_Access),
          Err_To_Out => True);
 
-      loop
+      while Current <= Revision_Number loop
          Read_Out : declare
             Matched : Regpat.Match_Array (Regpat.Match_Count range 0 .. 4);
             Result  : Expect.Expect_Match;
