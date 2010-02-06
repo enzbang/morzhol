@@ -99,6 +99,7 @@ gnatcheck: $(CHK_GPR)
 install::
 	$(MKDIR) $(prefix)/include/morzhol
 	$(MKDIR) $(prefix)/lib/morzhol
+	$(MKDIR) $(prefix)/lib/gnat
 	$(CP) src/*.ad[sb] $(prefix)/include/morzhol
 	$(CP) $(BUILD_DIR)/lib/*$(LIBEXT) $(prefix)/lib/morzhol
 	$(CP) $(BUILD_DIR)/lib/*.ali $(prefix)/lib/morzhol
