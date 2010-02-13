@@ -294,6 +294,8 @@ package body Morzhol.VC.RCS is
          end Read_Out;
       end loop;
 
+      return File_Log;
+
    exception
       when Expect.Invalid_Process | Expect.Process_Died =>
          return File_Log;
