@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                Morzhol                                   --
 --                                                                          --
---                           Copyright (C) 2007                             --
+--                         Copyright (C) 2007-2010                          --
 --                      Pascal Obry - Olivier Ramonat                       --
 --                                                                          --
 --  This library is free software; you can redistribute it and/or modify    --
@@ -28,7 +28,7 @@ package Morzhol.Logs is
 
    type Module_Name is new String;
 
-   type Log_Level is (Information, Warnings, Error, Verbose, Very_Verbose);
+   type Log_Level is (Very_Verbose, Verbose, Information, Warnings, Error);
 
    procedure Set_File (Filename : in String);
    --  Sets log file (default to stdout)
