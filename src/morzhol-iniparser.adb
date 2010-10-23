@@ -1,7 +1,7 @@
 ------------------------------------------------------------------------------
 --                                Morzhol                                   --
 --                                                                          --
---                           Copyright (C) 2007                             --
+--                           Copyright (C) 2007-2010                        --
 --                      Pascal Obry - Olivier Ramonat                       --
 --                                                                          --
 --  This library is free software; you can redistribute it and/or modify    --
@@ -21,6 +21,7 @@
 
 with Ada.IO_Exceptions;
 with Ada.Strings;
+with Ada.Strings.Maps;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
@@ -79,6 +80,8 @@ package body Morzhol.Iniparser is
 
             Buffer : Buffer_String;
             Last   : Natural;
+            Blanks : constant Maps.Character_Set :=
+                       Maps.To_Set (" " & ASCII.HT);
 
             -----------------------
             -- Check_Completness --
@@ -106,7 +109,8 @@ package body Morzhol.Iniparser is
                Get (From, Parameter, Last);
                Parameters (Parameter) :=
                  Trim (To_Unbounded_String (From (Last + 1 .. From'Last)),
-                       Side => Both);
+                       Left  => Blanks,
+                       Right => Blanks);
             exception
                when Ada.IO_Exceptions.Data_Error =>
                   raise Unknown_Parameter
